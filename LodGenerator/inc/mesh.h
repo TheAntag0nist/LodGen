@@ -1,6 +1,6 @@
 #ifndef MESH_H
 #define MESH_H
-#include <mesh.h>
+#include <global.h>
 
 namespace lod_generator{
     class mesh{
