@@ -13,7 +13,6 @@ namespace lod_generator{
             mesh();
             ~mesh();
 
-            // ����������: ��� vector � ������ � �������� 
             void set_indexes(std::vector<uint32_t> indexes_in);
             void set_indexes(uint32_t* ind_arr, uint32_t size);
             
@@ -23,9 +22,13 @@ namespace lod_generator{
             void set_normals(std::vector<double> normals_in);
             void set_normals(double* norm_arr, uint32_t size);
 
-            std::vector<uint32_t> get_vertexes();
-            std::vector<double> get_indexes();
+            std::vector<uint32_t> get_indexes();
+            std::vector<double> get_vertexes();
             std::vector<double> get_normals();
+
+            std::vector<uint32_t>& get_indexes_link();
+            std::vector<double>& get_vertexes_link();
+            std::vector<double>& get_normals_link();
     };
 }
 

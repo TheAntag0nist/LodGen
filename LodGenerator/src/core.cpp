@@ -4,8 +4,7 @@ namespace lod_generator{
     lod_core* lod_core::m_core = nullptr;
     
     lod_core::lod_core(){
-        // TODO: Add function
-        m_lods_functions[BASIC_ALG] = nullptr;
+        m_lods_functions[BASIC_ALG] = lod_basic_alg;
     }
 
     lod_core* lod_core::get_instance(){

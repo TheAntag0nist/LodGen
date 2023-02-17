@@ -1,6 +1,7 @@
 #ifndef BASIC_ALG_H
 #define BASIC_ALG_H
 #include <global.h>
+#include <errors.h>
 #include <mesh.h>
 
 namespace lod_generator {

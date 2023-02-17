@@ -1,6 +1,9 @@
 #include <mesh.h>
 
 namespace lod_generator {
+	mesh::mesh(){}
+	mesh::~mesh(){}
+
 	void mesh::set_vertexes(std::vector<double> vertexes_in) {
 		m_vertexes = vertexes_in;
 	}
@@ -34,12 +37,25 @@ namespace lod_generator {
 
 	std::vector<uint32_t> mesh::get_indexes(){
 		return m_indexes;
-	};
+	}
 	
 	std::vector<double> mesh::get_vertexes(){
 		return m_vertexes;
-	};
+	}
     
-    std::vector<double> mesh::get_normals(){};
+    std::vector<double> mesh::get_normals(){
+		return m_normals;
+	}
 
+    std::vector<uint32_t>& mesh::get_indexes_link(){
+		return m_indexes;
+	}
+
+    std::vector<double>& mesh::get_vertexes_link(){
+		return m_vertexes;
+	}
+
+    std::vector<double>& mesh::get_normals_link(){
+		return m_normals;
+	}
 }
