@@ -9,7 +9,9 @@ project(
 include_directories(./inc)
 # Set Source Files
 set(SOURCE_FL
+    ./src/algorithms/basic_alg.cpp
     ./src/core.cpp
+    ./src/mesh.cpp
 )
 # Add target library
 add_library(${PROJECT_NAME} ${SOURCE_FL})
