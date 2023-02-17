@@ -366,6 +366,8 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+.vscode
+*.sln
 
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
@@ -377,6 +379,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
+*.vcxproj
+*.vcxproj.*
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -396,3 +400,16 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+out
