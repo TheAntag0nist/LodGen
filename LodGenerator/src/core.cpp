@@ -8,4 +8,9 @@ namespace lod_generator{
             m_core = new lod_core();
         return m_core;
     }    
+
+
+    int lod_core::generate_lod(mesh& src_mesh, mesh& dst_mesh, LOD_ALG alg_type){
+        
+    }
 }

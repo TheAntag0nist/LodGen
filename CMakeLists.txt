@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-set(PROJECT_NAME Paral)
+set(PROJECT_NAME LodProject)
 # Set project
 project(
     ${PROJECT_NAME}
