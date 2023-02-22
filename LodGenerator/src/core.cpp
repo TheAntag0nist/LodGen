@@ -1,3 +1,4 @@
+#include <algorithms/algorithms.h>
 #include <core.h>
 
 namespace lod_generator{

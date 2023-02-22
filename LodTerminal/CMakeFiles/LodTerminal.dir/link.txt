@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/LodTerminal.dir/src/main.cpp.o -o ../bin/LodTerminal  ../bin/libLodGenerator.a 

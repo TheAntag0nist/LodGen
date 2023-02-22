@@ -1,11 +1,7 @@
 #ifndef CORE_H
 #define CORE_H
-// 2. Library Headers
-#include <algorithms/algorithms.h>
 #include <lod_func.h>
-#include <errors.h>
 #include <global.h>
-#include <mesh.h>
 
 namespace lod_generator{
     // 1. LOD Generator Core
