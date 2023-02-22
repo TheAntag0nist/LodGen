@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../bin/libLodGenerator.a CMakeFiles/LodGenerator.dir/src/algorithms/basic_alg.cpp.o CMakeFiles/LodGenerator.dir/src/lod_math.cpp.o CMakeFiles/LodGenerator.dir/src/core.cpp.o CMakeFiles/LodGenerator.dir/src/mesh.cpp.o
+/usr/bin/ranlib ../bin/libLodGenerator.a
