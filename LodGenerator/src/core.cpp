@@ -16,7 +16,7 @@ namespace lod_generator{
     int lod_core::generate_lod(mesh& src_mesh, mesh& dst_mesh, LOD_ALG alg_type){
         if(m_lods_functions.find(alg_type) != m_lods_functions.end()){
             auto func = m_lods_functions[alg_type];
-            return func(&src_mesh, &dst_mesh, m_error);
+            return func(src_mesh, dst_mesh, m_error);
         }
         else
             // TODO: Add Logging
