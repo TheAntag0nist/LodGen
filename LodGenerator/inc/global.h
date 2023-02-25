@@ -7,8 +7,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <memory>
 #include <ctime>
+#include <list>
 #include <map>
 
 #include <errors.h>
+// 2. Typedefs for library
+typedef int lod_result;
 #endif

@@ -15,20 +15,18 @@ namespace lod_generator{
     }    
 
     int lod_core::generate_lod(mesh& src_mesh, mesh& dst_mesh, LOD_ALG alg_type){
+        auto error = m_core_config.get_default_error();
+        
         if(m_lods_functions.find(alg_type) != m_lods_functions.end()){
             auto func = m_lods_functions[alg_type];
-            return func(src_mesh, dst_mesh, m_error);
+            return func(src_mesh, dst_mesh, error);
         }
         else
             // TODO: Add Logging
             return ERR_BASIC;
     }
 
-    void lod_core::set_error(double error){
-        m_error = error;
-    }
-
-    double lod_core::get_error(){
-        return m_error;
+    void lod_core::read_config_file(std::string config_file){
+        m_core_config.read_config(config_file);
     }
 }
