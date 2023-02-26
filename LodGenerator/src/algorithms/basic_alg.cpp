@@ -14,10 +14,15 @@ namespace lod_generator{
         std::vector<glm::vec3> normals;
         normals.resize(cnt_faces);
 
+        // Init Mesh Data
         mesh_data data = {};
         data.vertexes = &vertexes;
         data.indexes = &indexes;
         data.normals = &normals;
+        
+        data.valid_pairs = new std::vector<std::pair<uint32_t, uint32_t>>;
+        data.face_quadric_errors = new std::vector<glm::mat4x4>;
+        data.valid_face_ids = new std::vector<uint32_t>;
 
         // TODO: Need to configure for calculations on CPU or GPU
         // 3. Get normals for all faces
@@ -31,8 +36,10 @@ namespace lod_generator{
             return result;
 
         // 5. Compute Quadric Errors Matrixes 
-        // for all valid faces
+        result = compute_faces_errors(data);
+        if(result != SUCCESS)
+            return result;
 
-        return SUCCESS;
+        return result;
     }
 }
