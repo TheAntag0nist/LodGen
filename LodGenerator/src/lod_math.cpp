@@ -66,7 +66,7 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    int get_valid_pairs(const mesh_data data, std::list<std::pair<uint32_t, uint32_t>>& valid_pairs){
+    int get_valid_pairs(const mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
         std::vector<std::shared_ptr<std::thread>> threads;
@@ -90,7 +90,7 @@ namespace lod_generator {
 
             // Create threads
             for(int i = 0; i < num_threads; ++i){
-                std::shared_ptr<std::thread> th(new std::thread(get_valid_pairs_cpu, i, split_size, data, valid_lists[i]));
+                std::shared_ptr<std::thread> th(new std::thread(get_valid_pairs_cpu, i, split_size, data, &valid_lists[i]));
                 threads.push_back(th);
             }
 
@@ -100,13 +100,13 @@ namespace lod_generator {
 
             // Collect all lists
             for(int i = 0; i < num_threads; ++i)
-                valid_pairs.insert(valid_pairs.end(), valid_lists[i].begin(), valid_lists[i].end());
+                data.valid_pairs->insert(data.valid_pairs->end(), valid_lists[i].begin(), valid_lists[i].end());
         }
 
         return SUCCESS;
     }
 
-    int get_valid_pairs_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<std::pair<uint32_t, uint32_t>>& valid_pairs){
+    int get_valid_pairs_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<std::pair<uint32_t, uint32_t>>* valid_pairs){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
         auto vertexes_ptr = data.vertexes;
@@ -127,12 +127,28 @@ namespace lod_generator {
             glm::vec3 v_ac = v1 - v3;
             glm::vec3 v_bc = v2 - v3;
 
-            if(glm::length(v_ab) < edge_threshold)
-                valid_pairs.push_back(std::make_pair(v1_index, v2_index));
-            if(glm::length(v_ac) < edge_threshold)
-                valid_pairs.push_back(std::make_pair(v1_index, v3_index));
-            if(glm::length(v_bc) < edge_threshold)
-                valid_pairs.push_back(std::make_pair(v2_index, v3_index));
+            // Add valid edge
+            bool add_valid_face = false;
+            if(glm::length(v_ab) < edge_threshold){
+                valid_pairs->push_back(std::make_pair(v1_index, v2_index));
+                add_valid_face = true;
+            }
+            
+            // Add valid edge
+            if(glm::length(v_ac) < edge_threshold){
+                valid_pairs->push_back(std::make_pair(v1_index, v3_index));
+                add_valid_face = true;
+            }
+
+            // Add valid edge
+            if(glm::length(v_bc) < edge_threshold){
+                valid_pairs->push_back(std::make_pair(v2_index, v3_index));
+                add_valid_face = true;
+            }
+
+            // Add valid face id
+            if(add_valid_face)
+                data.valid_face_ids->push_back(i / 3);
         }
 
         return SUCCESS;
