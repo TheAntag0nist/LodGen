@@ -14,16 +14,16 @@ namespace lod_generator {
 // 4. Global Structures
     typedef struct mesh_data{
         // 4.1. Global Data
-        std::vector<glm::vec3>* normals; 
-        std::vector<uint32_t>* indexes;
-        std::vector<double>* vertexes;
+        std::shared_ptr<std::vector<glm::vec3>> normals; 
+        std::shared_ptr<std::vector<uint32_t>> indexes;
+        std::shared_ptr<std::vector<double>> vertexes;
 
         // 4.2. Valid Edges and Faces
-        std::vector<std::pair<uint32_t, uint32_t>>* valid_pairs;
-        std::vector<uint32_t>* valid_face_ids;
+        std::shared_ptr<std::vector<std::pair<uint32_t, uint32_t>>> valid_pairs;
+        std::shared_ptr<std::vector<uint32_t>> valid_face_ids;
 
         // 4.3. Quadric Costs Data
-        std::vector<glm::mat4x4>* face_quadric_errors;
+        std::shared_ptr<std::vector<glm::mat4x4>> face_quadric_errors;
     } mesh_data;
 
     typedef struct triangle_data{

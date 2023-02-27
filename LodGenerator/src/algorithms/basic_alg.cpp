@@ -16,13 +16,13 @@ namespace lod_generator{
 
         // Init Mesh Data
         mesh_data data = {};
-        data.vertexes = &vertexes;
-        data.indexes = &indexes;
-        data.normals = &normals;
+        data.vertexes = std::shared_ptr<std::vector<double>>(&vertexes);
+        data.indexes = std::shared_ptr<std::vector<uint32_t>>(&indexes);
+        data.normals = std::shared_ptr<std::vector<glm::vec3>>(&normals);
         
-        data.valid_pairs = new std::vector<std::pair<uint32_t, uint32_t>>;
-        data.face_quadric_errors = new std::vector<glm::mat4x4>;
-        data.valid_face_ids = new std::vector<uint32_t>;
+        data.valid_pairs = std::make_shared<std::vector<std::pair<uint32_t, uint32_t>>>();
+        data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
+        data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
 
         // TODO: Need to configure for calculations on CPU or GPU
         // 3. Get normals for all faces

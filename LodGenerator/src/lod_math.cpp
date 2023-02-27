@@ -20,6 +20,10 @@ namespace lod_generator {
         auto& indexes = *(data.indexes);
         face_data result = {};
 
+        // TODO: rewrite on logging
+        if (face_id > indexes.size() / 3)
+            assert(false);
+
         result.v1_id = indexes[face_id * 3];
         result.v2_id = indexes[face_id * 3 + 1];
         result.v3_id = indexes[face_id * 3 + 2];
@@ -44,9 +48,9 @@ namespace lod_generator {
     int get_faces_normals_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data){
         // 0. Data Section
         uint32_t start_block = thread_id * split_size;
-        auto vertexes = data.vertexes;
-        auto indexes = data.indexes;
-        auto normals = data.normals;
+        auto& vertexes = data.vertexes;
+        auto& indexes = data.indexes;
+        auto& normals = data.normals;
 
         auto temp_block = start_block + split_size;
         auto end_block = temp_block > indexes->size() ? temp_block : indexes->size();
@@ -137,9 +141,9 @@ namespace lod_generator {
     int get_valid_pairs_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<std::pair<uint32_t, uint32_t>>* valid_pairs){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto vertexes_ptr = data.vertexes;
-        auto indexes_ptr = data.indexes;
-        auto normals_ptr = data.normals;
+        auto& vertexes_ptr = data.vertexes;
+        auto& indexes_ptr = data.indexes;
+        auto& normals_ptr = data.normals;
 
         auto temp_block = start_block + split_size;
         auto end_block = temp_block > indexes_ptr->size() ? temp_block : indexes_ptr->size();
@@ -227,9 +231,9 @@ namespace lod_generator {
     int compute_faces_errors_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<glm::mat4x4>* errors){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto valid_faces = data.valid_face_ids;
-        auto vertexes_ptr = data.vertexes;
-        auto indexes_ptr = data.indexes;
+        auto& valid_faces = data.valid_face_ids;
+        auto& vertexes_ptr = data.vertexes;
+        auto& indexes_ptr = data.indexes;
 
         auto temp_block = start_block + split_size;
         auto end_block = temp_block < valid_faces->size() ? temp_block : valid_faces->size();
