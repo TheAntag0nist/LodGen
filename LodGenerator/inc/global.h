@@ -1,6 +1,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 // 1. Global Headers
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
@@ -8,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <memory>
+#include <chrono>
 #include <ctime>
 #include <list>
 #include <map>
