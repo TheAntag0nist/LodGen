@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 // Глобальные переменные и объекты для облегчения передачи данных по функциям
 std::string command;
@@ -31,9 +32,9 @@ void help() {
 void memToObj() {
     std::cout << INFO << "writing to file " << filename << std::endl;
 
-    std::vector<uint32_t> indexes = src_mesh.get_indexes();
-    std::vector<double> vertexes = src_mesh.get_vertexes();
-    std::vector<double> normals = src_mesh.get_normals();
+    std::vector<uint32_t> indexes = dst_mesh.get_indexes_link();
+    std::vector<double> vertexes = dst_mesh.get_vertexes_link();
+    std::vector<double> normals = dst_mesh.get_normals_link();
 
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -41,7 +42,7 @@ void memToObj() {
         return;
     }
 
-    file << std::fixed << std::setprecision(6);
+    file << std::fixed << std::setprecision(10);
 
     std::cout << START << "started writing into a file" << std::endl;
     // Записываем вертексы
@@ -50,15 +51,15 @@ void memToObj() {
     }
 
     // Записываем нормали
-    for (size_t i = 0; i < normals.size(); i += 3) {
-        file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
-    }
+    //for (size_t i = 0; i < normals.size(); i += 3) {
+    //    file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
+    //}
 
     // Записываем индексы
     for (size_t i = 0; i < indexes.size(); i += 3) {
-        file << "f " << indexes[i] + 1 << "/" << indexes[i] + 1 << " "
-            << indexes[i + 1] + 1 << "/" << indexes[i + 1] + 1 << " "
-            << indexes[i + 2] + 1 << "/" << indexes[i + 2] + 1 << "\n";
+        file << "f " << indexes[i] + 1 << "//" << " "
+            << indexes[i + 1] + 1 << "//" << " "
+            << indexes[i + 2] + 1 << "//" << "\n";
     }
 
     std::cout << END << "ended writing into a file" << std::endl;
@@ -171,10 +172,31 @@ int main(){
             memToObj();
         }
         else if (command == "optimize" || command == "-optimize") {
-            filename = "C:\\Users\\teoru\\_projects\\.MAIN\\LodGen\\Models\\test_1.obj";
+            getFilename();
+
+            // TODO: Create Timer class
+            auto start_read = std::chrono::high_resolution_clock::now();
             objToMem();
+            auto finish_read = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed_read = finish_read - start_read;
+            std::cout << "Read Elapsed Time: " << elapsed_read.count() << " ms" << std::endl;
+
+            auto start = std::chrono::high_resolution_clock::now();
+
             auto instance = lod_generator::lod_core::get_instance();
             instance->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
+
+            auto finish = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed = finish - start;
+            std::cout << "Optimization Elapsed Time: " << elapsed.count() << " ms" << std::endl;
+
+            getFilename();
+
+            auto start_write = std::chrono::high_resolution_clock::now();
+            memToObj();
+            auto finish_write = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed_write = finish_write - start_write;
+            std::cout << "Write Elapsed Time: " << elapsed_write.count() << " ms" << std::endl;
         }
         else {
             std::cout << ERROR << "unknown command, try again" << std::endl;
