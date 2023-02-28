@@ -10,7 +10,7 @@ namespace lod_generator{
     };
 
     // 2. LOD's Algorithms Function
-    typedef int (*lod_func)(mesh*, mesh*, double);
+    typedef int (*lod_func)(mesh&, mesh&, double);
 }   
 
 #endif
