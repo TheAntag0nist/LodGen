@@ -144,7 +144,7 @@ namespace lod_generator {
             // Collect all lists
             for(int i = 0; i < num_threads; ++i){
                 data.valid_pairs->insert(data.valid_pairs->end(), valid_lists[i].begin(), valid_lists[i].end());
-                data.valid_face_ids->insert(data.valid_face_ids->end(), valid_faces_ids_lists[i].begin(), valid_faces_ids_lists[i].end())
+                data.valid_face_ids->insert(data.valid_face_ids->end(), valid_faces_ids_lists[i].begin(), valid_faces_ids_lists[i].end());
             }
         }
 

@@ -1,5 +1,4 @@
 #include <algorithms/basic_alg.h>
-#include <lod_math.h>
 
 namespace lod_generator{
     int lod_basic_alg(mesh& src_mesh, mesh& dst_mesh, double error){
@@ -25,21 +24,25 @@ namespace lod_generator{
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
 
         // TODO: Need to configure for calculations on CPU or GPU
-        // 3. Get normals for all faces
-        result = get_faces_normals(data);
-        if(result != SUCCESS)
-            return result;
+        // 3. Get normals for all faces && Get valid edges
+        std::thread faces_thread(faces_normals_thread, data);
+        std::thread edges_thread(valid_pairs_thread, data);
+        faces_thread.join();
+        edges_thread.join();
 
-        // 4. Get valid edges
-        result = get_valid_pairs(data);
-        if(result != SUCCESS)
-            return result;
-
-        // 5. Compute Quadric Errors Matrixes 
+        // 4. Compute Quadric Errors Matrixes 
         result = compute_faces_errors(data);
         if(result != SUCCESS)
             return result;
 
         return result;
+    }
+
+    lod_result faces_normals_thread(mesh_data data){
+        return get_faces_normals(data);
+    }
+
+    lod_result valid_pairs_thread(mesh_data data){
+        return get_valid_pairs(data);
     }
 }
