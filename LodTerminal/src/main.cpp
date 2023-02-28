@@ -170,6 +170,12 @@ int main(){
             getFilename();
             memToObj();
         }
+        else if (command == "optimize" || command == "-optimize") {
+            filename = "C:\\Users\\teoru\\_projects\\.MAIN\\LodGen\\Models\\test_1.obj";
+            objToMem();
+            auto instance = lod_generator::lod_core::get_instance();
+            instance->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
+        }
         else {
             std::cout << ERROR << "unknown command, try again" << std::endl;
         }
