@@ -42,7 +42,7 @@ void memToObj() {
         return;
     }
 
-    file << std::fixed << std::setprecision(6);
+    file << std::fixed << std::setprecision(10);
 
     std::cout << START << "started writing into a file" << std::endl;
     // Записываем вертексы
@@ -51,15 +51,15 @@ void memToObj() {
     }
 
     // Записываем нормали
-    for (size_t i = 0; i < normals.size(); i += 3) {
-        file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
-    }
+    //for (size_t i = 0; i < normals.size(); i += 3) {
+    //    file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
+    //}
 
     // Записываем индексы
     for (size_t i = 0; i < indexes.size(); i += 3) {
-        file << "f " << indexes[i] + 1 << "/" << indexes[i] + 1 << " "
-            << indexes[i + 1] + 1 << "/" << indexes[i + 1] + 1 << " "
-            << indexes[i + 2] + 1 << "/" << indexes[i + 2] + 1 << "\n";
+        file << "f " << indexes[i] + 1 << "//" << " "
+            << indexes[i + 1] + 1 << "//" << " "
+            << indexes[i + 2] + 1 << "//" << "\n";
     }
 
     std::cout << END << "ended writing into a file" << std::endl;

@@ -9,7 +9,7 @@ namespace lod_generator {
 ///////////////////////////////////////////////////////////////////////////
 // 3. Global Constants
     // TODO: Rewrite as editable parameter
-    const double edge_threshold = 0.3f;
+    const double edge_threshold = 1.5f;
 ///////////////////////////////////////////////////////////////////////////
 // 4. Global Structures
     typedef std::pair<glm::vec3, double> vertex_and_cost;

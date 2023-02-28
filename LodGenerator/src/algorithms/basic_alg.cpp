@@ -24,28 +24,10 @@ namespace lod_generator{
         data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
 
-        // TODO: Think about thread guard
-        // TODO: Need to configure for calculations on CPU or GPU
-        // 4. Get valid edges
-        result = get_valid_pairs(data);
-        if (result != SUCCESS)
-            return result;
+        optimize_mesh(data);
 
-        // 5. Compute Quadric Errors Matrixes 
-        result = compute_faces_errors(data);
-        if(result != SUCCESS)
-            return result;
-
-        // 6. Compute vertexes for replace with min costs
-        result = compute_costs(data);
-        if (result != SUCCESS)
-            return result;
-
-        // 7. Sort by costs
-        std::sort(data.edge_vertexes->begin(), data.edge_vertexes->end(), 
-            [](std::pair<vertex_and_cost, edge_pair> const& a, std::pair<vertex_and_cost, edge_pair> const& b) 
-            { return a.first.second < b.first.second; });
-
+        dst_mesh.set_vertexes(*data.vertexes);
+        dst_mesh.set_indexes(*data.indexes);
         return result;
     }
 

@@ -156,10 +156,10 @@ namespace lod_generator {
         }
         else {
             // Calculate split size for threads
-            auto norm_size = data.normals->size();
-            auto split_size = norm_size / num_threads;
+            auto size = data.indexes->size() / 3;
+            auto split_size = size / num_threads;
 
-            while (split_size * num_threads < norm_size)
+            while (split_size * num_threads < size)
                 ++split_size;
 
             // Create threads
@@ -190,15 +190,15 @@ namespace lod_generator {
         auto start_block = thread_id * split_size;
         auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
-        auto& normals_ptr = data.normals;
 
         // Result Struct Pointers
         auto valid_faces_ids = result_data.valid_faces_ids;
         auto valid_edges = result_data.valid_edges;
 
         // Calculate size
+        auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < normals_ptr->size() ? temp_block : normals_ptr->size();
+        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Calculations
         for(int i = start_block; i < end_block; ++i) {
@@ -263,10 +263,10 @@ namespace lod_generator {
         }
         else {
             // Calculate split size for threads
-            auto norm_size = data.normals->size();
-            auto split_size = norm_size / num_threads;
+            auto size = data.indexes->size() / 3;
+            auto split_size = size / num_threads;
 
-            while (split_size * num_threads < norm_size)
+            while (split_size * num_threads < size)
                 ++split_size;
 
             // Create threads
@@ -292,9 +292,8 @@ namespace lod_generator {
         auto start_block = thread_id * split_size;
         auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
-        auto& normals_ptr = data.normals;
 
-        auto faces_cnt = normals_ptr->size();
+        auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
         auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
@@ -424,19 +423,122 @@ namespace lod_generator {
 
 
     int optimize_mesh(mesh_data data) {
-        std::list<uint32_t> temp_indexes;
-        std::list<double> temp_vertexes;
+        lod_result result = SUCCESS;
 
-        temp_indexes.insert(temp_indexes.begin(), data.indexes->begin(), data.indexes->end());
-        temp_vertexes.insert(temp_vertexes.begin(), data.vertexes->begin(), data.vertexes->end());
+        // TODO: Think about thread guard
+        // TODO: Need to configure for calculations on CPU or GPU
+        // 1. Get valid edges
+        result = get_valid_pairs(data);
+        if (result != SUCCESS)
+            return result;
 
+        // 2. Compute Quadric Errors Matrixes 
+        result = compute_faces_errors(data);
+        if (result != SUCCESS)
+            return result;
+
+        // 3. Compute vertexes for replace with min costs
+        result = compute_costs(data);
+        if (result != SUCCESS)
+            return result;
+
+        // 4. Sort by costs
+        data.edge_vertexes->sort(
+            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+        
         while (data.edge_vertexes->size() > 0) {
+            // 5. Get vertex with minimal cost
             std::pair<vertex_and_cost, edge_pair> replace_vertex = data.edge_vertexes->front();
             data.edge_vertexes->pop_front();
+        
+            // 6. Get Data
+            auto vertex = replace_vertex.first.first;
+            auto cost = replace_vertex.first.second;
+            auto edge = replace_vertex.second;
+        
+            uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
+            uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+        
+            // 7. Update vertexes
+            // 7.1. Update v1 (set new value)
+            (*data.vertexes)[min_index * 3] = vertex.x;
+            (*data.vertexes)[min_index * 3 + 1] = vertex.y;
+            (*data.vertexes)[min_index * 3 + 2] = vertex.z;
+        
+            // 7.2. Delete v2 (remove from vector)
+            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+        
+            // 8. Update indexes
+            // 8.1. Replace max index on min index
+            std::for_each(data.indexes->begin(), data.indexes->end(),
+                [max_index, min_index](uint32_t& value) { if (value == max_index) value = min_index; });
+            // 8.2. Update indexes greater that max index
+            std::for_each(data.indexes->begin(), data.indexes->end(), 
+                [max_index](uint32_t& value)
+                { if (value > max_index) --value; });
+            // 8.3. Remove degenerate faces
+            auto& shr_ptr = data.indexes;
+            for (int i = 0; i < data.indexes->size(); i += 3) {
+                int cnt = 0;
+                if ((*shr_ptr)[i] == min_index)
+                    ++cnt;
 
+                if ((*shr_ptr)[i + 1] == min_index)
+                    ++cnt;
 
+                if ((*shr_ptr)[i + 2] == min_index)
+                    ++cnt;
+
+                if (cnt >= 2) {
+                    (*shr_ptr)[i] = _UI32_MAX;
+                    (*shr_ptr)[i + 1] = _UI32_MAX;
+                    (*shr_ptr)[i + 2] = _UI32_MAX;
+                }
+            }
+
+            std::list<uint32_t> temp_list;
+            for (int i = 0; i < data.indexes->size(); ++i) {
+                if ((*shr_ptr)[i] != _UI32_MAX)
+                    temp_list.push_back((*shr_ptr)[i]);
+            }
+            
+            data.indexes->clear();
+            data.indexes->insert(data.indexes->end(), temp_list.begin(), temp_list.end());
+            temp_list.clear();
+
+            // 9. Clear old metadata
+            data.face_quadric_errors->clear();
+            data.valid_face_ids->clear();
+            data.edge_vertexes->clear();
+            data.valid_edges->clear();
+
+            // TODO: Think about thread guard
+            // TODO: Need to configure for calculations on CPU or GPU
+            // 1. Get valid edges
+            result = get_valid_pairs(data);
+            if (result != SUCCESS)
+                return result;
+
+            // 2. Compute Quadric Errors Matrixes 
+            result = compute_faces_errors(data);
+            if (result != SUCCESS)
+                return result;
+
+            // 3. Compute vertexes for replace with min costs
+            result = compute_costs(data);
+            if (result != SUCCESS)
+                return result;
+
+            if (data.edge_vertexes->size() == 0)
+                break;
+
+            // 4. Sort by costs
+            data.edge_vertexes->sort(
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
         }
 
-        return SUCCESS;
+        return result;
     }
 }
