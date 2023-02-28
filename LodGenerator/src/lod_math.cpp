@@ -144,7 +144,9 @@ namespace lod_generator {
             // Collect all lists
             for(int i = 0; i < num_threads; ++i){
                 data.valid_pairs->insert(data.valid_pairs->end(), valid_lists[i].begin(), valid_lists[i].end());
+#if _DEBUG
                 data.valid_face_ids->insert(data.valid_face_ids->end(), valid_faces_ids_lists[i].begin(), valid_faces_ids_lists[i].end());
+#endif
             }
         }
 
@@ -203,10 +205,12 @@ namespace lod_generator {
                 add_valid_face = true;
             }
 
+#if _DEBUG
             // Add valid face id
             // TODO: Need to rewrite for multithreading
             if(add_valid_face)
                 valid_faces_ids->push_back(i);
+#endif
         }
 
         return SUCCESS;
@@ -227,11 +231,15 @@ namespace lod_generator {
         }
         else {
             // Calculate split size for threads
-            uint32_t split_size = data.indexes->size() / num_threads;
+            auto norm_size = data.normals->size();
+            uint32_t split_size = norm_size / num_threads;
             if(split_size % 3 == 1)
                 split_size = split_size + 1;
             else if(split_size % 3 == 2)
                 split_size = split_size + 2;
+
+            while (split_size * num_threads < norm_size)
+                ++split_size;
 
             // Create threads
             for(int i = 0; i < num_threads; ++i){
@@ -255,17 +263,17 @@ namespace lod_generator {
     int compute_faces_errors_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<glm::mat4x4>* errors){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto& valid_faces = data.valid_face_ids;
         auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
+        auto& normals_ptr = data.normals;
 
+        auto faces_cnt = normals_ptr->size();
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < valid_faces->size() ? temp_block : valid_faces->size();
+        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Compute faces errors
         for(int i = start_block; i < end_block; ++i){
-            uint32_t face_id = (*valid_faces)[i];
-            face_data face_data = get_face_data(data, face_id);
+            face_data face_data = get_face_data(data, i);
             tr_data t_data = get_triangle_data(data, face_data);
 
             face_args result = {};

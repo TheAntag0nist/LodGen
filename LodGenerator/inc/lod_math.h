@@ -9,7 +9,7 @@ namespace lod_generator {
 ///////////////////////////////////////////////////////////////////////////
 // 3. Global Constants
     // TODO: Rewrite as editable parameter
-    const double edge_threshold = 0.5f;
+    const double edge_threshold = 0.1f;
 ///////////////////////////////////////////////////////////////////////////
 // 4. Global Structures
     typedef struct mesh_data{
@@ -20,7 +20,9 @@ namespace lod_generator {
 
         // 4.2. Valid Edges and Faces
         std::shared_ptr<std::vector<std::pair<uint32_t, uint32_t>>> valid_pairs;
+#if _DEBUG
         std::shared_ptr<std::vector<uint32_t>> valid_face_ids;
+#endif
 
         // 4.3. Quadric Costs Data
         std::shared_ptr<std::vector<glm::mat4x4>> face_quadric_errors;
