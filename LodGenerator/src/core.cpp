@@ -5,7 +5,9 @@ namespace lod_generator{
     lod_core* lod_core::m_core = nullptr;
     
     lod_core::lod_core(){
-        m_lods_functions[BASIC_ALG] = lod_basic_alg;
+        m_lods_functions[ITERATIVE_QEM] = lod_QEM_iterative;
+        m_lods_functions[HYBRID_QEM] = lod_QEM_hybrid;
+        m_lods_functions[BASIC_QEM] = lod_QEM;
     }
 
     lod_core* lod_core::get_instance(){

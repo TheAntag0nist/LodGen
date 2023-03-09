@@ -11,7 +11,7 @@ namespace lod_generator{
     class core_config{
     private:
         COMPUTE_ARCHITECTURE m_architecture = CPU_ARCHITECTURE;
-        double m_default_error = 0.01f;
+        double m_default_error = 0.5f;
 
     private:
         COMPUTE_ARCHITECTURE parse_architecture(std::string str);
