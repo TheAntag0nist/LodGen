@@ -15,47 +15,56 @@ namespace lod_generator {
     typedef std::pair<glm::vec3, double> vertex_and_cost;
     typedef std::pair<uint32_t, uint32_t> edge_pair;
 
-    // mesh_data - it's optimization metadata
+    // 4.1. mesh_data - it's optimization metadata
     typedef struct mesh_data{
-        // 4.1. Global Data
+        // 4.1.1. Global Data
         std::shared_ptr<std::vector<glm::dvec3>> normals; 
         std::shared_ptr<std::vector<uint32_t>> indexes;
         std::shared_ptr<std::vector<double>> vertexes;
 
-        // 4.2. Valid Edges and Faces
+        // 4.1.2. Valid Edges and Faces
         std::shared_ptr<std::vector<edge_pair>> valid_edges;
 #ifdef _DEBUG
         std::shared_ptr<std::vector<uint32_t>> valid_face_ids;
 #endif
 
-        // 4.3. Quadric Costs Data
+        // 4.1.3. Quadric Costs Data
         std::shared_ptr<std::vector<glm::mat4x4>> face_quadric_errors;
 
-        // 4.4. Edges Costs and Vertexes
+        // 4.1.4. Edges Costs and Vertexes
         std::shared_ptr<std::list<std::pair<vertex_and_cost, edge_pair>>> edge_vertexes;
+
+        // 4.1.5 Error
+        double algorithm_error;
     } mesh_data;
 
+    // TODO: Need upgrade search valid pairs algorithm
+    // 4.2. valid_edges_data  - lists with valid edges and faces ID's
     typedef struct valid_edges_data {
         std::list<std::pair<uint32_t, uint32_t>>* valid_edges;
         std::list<uint32_t>* valid_faces_ids;
     } valid_edges_data;
 
+    // 4.3. min_vertexes  - List with vertexes that will be replaced
     typedef struct min_vertexes {
         std::list<std::pair<vertex_and_cost, edge_pair>>* min_vertex_for_edge;
     } min_vertexes;
 
+    // 4.4. triangle_data - Triangle vertexes 
     typedef struct triangle_data {
         glm::dvec3 v1;
         glm::dvec3 v2;
         glm::dvec3 v3;
     } tr_data;
 
+    // 4.5. face_data - Surface vertexes ID's
     typedef struct face_data {
         uint32_t v1_id;
         uint32_t v2_id;
         uint32_t v3_id;
     } face_data;
 
+    // 4.6. face_args - Values of the arguments of the plane function
     typedef struct face_args {
         double A;
         double B;
@@ -86,7 +95,16 @@ namespace lod_generator {
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids);
     double get_cost(glm::vec4 v, glm::mat4x4 Q);
 
-    int optimize_mesh(mesh_data data);
+    lod_result optimize_mesh_iterative(mesh_data data);
+    lod_result optimize_mesh_hybrid(mesh_data data);
+    lod_result optimize_mesh(mesh_data data);
+
+    uint32_t update_mesh(mesh_data data);
+    lod_result qem_cycle(mesh_data data);
+///////////////////////////////////////////////////////////////////////////
+// 7. Vertex Reduce Algorithm
+
+
 ///////////////////////////////////////////////////////////////////////////
 }
 

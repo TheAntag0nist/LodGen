@@ -13,6 +13,7 @@
 #include <ctime>
 #include <list>
 #include <map>
+#include <set>
 
 #include <errors.h>
 // 2. Typedefs for library

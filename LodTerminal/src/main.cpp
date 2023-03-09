@@ -184,7 +184,7 @@ int main(){
             auto start = std::chrono::high_resolution_clock::now();
 
             auto instance = lod_generator::lod_core::get_instance();
-            instance->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
+            instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
 
             auto finish = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = finish - start;
