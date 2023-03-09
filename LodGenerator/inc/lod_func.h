@@ -6,7 +6,10 @@
 namespace lod_generator{
     // 1. Enumerations with Library Algorithms
     enum LOD_ALG{
-        BASIC_ALG
+        // 1. Quadric Error Metric
+        ITERATIVE_QEM,
+        HYBRID_QEM,
+        BASIC_QEM
     };
 
     // 2. LOD's Algorithms Function

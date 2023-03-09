@@ -220,19 +220,19 @@ namespace lod_generator {
             auto len_ac = glm::length(v_ac);
             auto len_bc = glm::length(v_bc);
 
-            if(len_ab < edge_threshold){
+            if(len_ab < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v1_index, v2_index));
                 add_valid_face = true;
             }
             
             // Add valid edge
-            if(len_ac < edge_threshold){
+            if(len_ac < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v1_index, v3_index));
                 add_valid_face = true;
             }
 
             // Add valid edge
-            if(len_bc < edge_threshold){
+            if(len_bc < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v2_index, v3_index));
                 add_valid_face = true;
             }
@@ -421,10 +421,172 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-
-    int optimize_mesh(mesh_data data) {
+    // Description :
+    // 1. Quality: HIGH
+    // 2. Speed:   LOW
+    lod_result optimize_mesh_iterative(mesh_data data) {
+        // 0. Data Zone
         lod_result result = SUCCESS;
 
+        // 1. Call Basic Cycle
+        result = qem_cycle(data);
+        if (result != SUCCESS)
+            return result;
+
+        if (data.edge_vertexes->size() == 0)
+            return result;
+
+        // 2. Sort by costs
+        data.edge_vertexes->sort(
+            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b)
+            { return a.first.second < b.first.second; });
+        
+        // 3. While can optimize -> try to optimize
+        while (data.edge_vertexes->size() > 0) {
+            // 4. Update vector with vertexes and indexes
+            update_mesh(data);
+
+            // 5. Clear old metadata
+            data.face_quadric_errors->clear();
+            data.valid_face_ids->clear();
+            data.edge_vertexes->clear();
+            data.valid_edges->clear();
+
+            // 6. Call Basic Cycle
+            result = qem_cycle(data);
+            if (result != SUCCESS)
+                break;
+
+            if (data.edge_vertexes->size() == 0)
+                break;
+
+            // 7. Sort by costs
+            data.edge_vertexes->sort(
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                { return a.first.second < b.first.second; });
+        }
+
+        return result;
+    }
+
+    lod_result optimize_mesh_hybrid(mesh_data data) {
+        // 0. Data Zone
+        const uint32_t MAX_ITER = 32768;
+        lod_result result = SUCCESS;
+        bool change_flag = true;
+        uint32_t iter_cnt = 0;
+
+        while (change_flag && iter_cnt < MAX_ITER) {
+            std::set<uint32_t> used_indexes;
+            change_flag = false;
+            // 1. Call Basic Cycle
+            result = qem_cycle(data);
+            if (result != SUCCESS)
+                return result;
+
+            // If no need optimize
+            if (data.edge_vertexes->size() == 0)
+                break;
+
+            // 2. Sort by costs
+            data.edge_vertexes->sort(
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+
+            // 3. While can optimize -> try to optimize
+            while (data.edge_vertexes->size() > 0) {
+                auto& edge = data.edge_vertexes->front().second;
+                uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
+                uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+
+                if (used_indexes.find(min_index) == used_indexes.end() &&
+                    used_indexes.find(max_index) == used_indexes.end()) {
+                    // 4. Update vector with vertexes and indexes
+                    auto deleted_faces = update_mesh(data);
+                    change_flag = true;
+
+                    // 5. Update edges
+                    for (auto& item : (*data.edge_vertexes)) {
+                        item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
+                        item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                    }
+
+                    // TODO: Maybe rewrite using <algorithm>
+                    std::list temp_list(used_indexes.begin(), used_indexes.end());
+                    for (auto& item : temp_list)
+                        item = item > max_index ? --item : item;
+                    used_indexes.clear();
+                    used_indexes.insert(temp_list.begin(), temp_list.end());
+
+                    used_indexes.insert(max_index);
+                    used_indexes.insert(min_index);
+                } else
+                    data.edge_vertexes->pop_front();
+            }
+
+            // 6. Clear old metadata
+            data.face_quadric_errors->clear();
+            data.valid_face_ids->clear();
+            data.edge_vertexes->clear();
+            data.valid_edges->clear();
+
+            ++iter_cnt;
+        }
+
+        return result;
+    }
+
+    lod_result optimize_mesh(mesh_data data) {
+        // 0. Data Zone
+        std::set<uint32_t> used_indexes;
+        lod_result result = SUCCESS;
+
+        // 1. Call Basic Cycle
+        result = qem_cycle(data);
+        if (result != SUCCESS)
+            return result;
+
+        if (data.edge_vertexes->size() == 0)
+            return result;
+
+        // 2. Sort by costs
+        data.edge_vertexes->sort(
+            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+
+        // 3. While can optimize -> try to optimize
+        while (data.edge_vertexes->size() > 0) {
+            auto& edge = data.edge_vertexes->front().second;
+            uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
+            uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+
+            if (used_indexes.find(min_index) == used_indexes.end() &&
+                used_indexes.find(max_index) == used_indexes.end()) {
+                // 4. Update vector with vertexes and indexes
+                auto deleted_faces = update_mesh(data);
+
+                // 5. Update edges
+                for (auto& item : (*data.edge_vertexes)) {
+                    item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
+                    item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                }
+
+                // TODO: Maybe rewrite using <algorithm>
+                std::list temp_list(used_indexes.begin(), used_indexes.end());
+                for (auto& item : temp_list)
+                    item = item > max_index ? --item: item;
+                used_indexes.clear();
+                used_indexes.insert(temp_list.begin(), temp_list.end());
+                
+                used_indexes.insert(max_index);
+                used_indexes.insert(min_index);
+            } else
+                data.edge_vertexes->pop_front();
+        }
+
+        return result;
+    }
+
+    lod_result qem_cycle(mesh_data data) {
+        lod_result result = SUCCESS;
         // TODO: Think about thread guard
         // TODO: Need to configure for calculations on CPU or GPU
         // 1. Get valid edges
@@ -442,103 +604,73 @@ namespace lod_generator {
         if (result != SUCCESS)
             return result;
 
-        // 4. Sort by costs
-        data.edge_vertexes->sort(
-            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
-        
-        while (data.edge_vertexes->size() > 0) {
-            // 5. Get vertex with minimal cost
-            std::pair<vertex_and_cost, edge_pair> replace_vertex = data.edge_vertexes->front();
-            data.edge_vertexes->pop_front();
-        
-            // 6. Get Data
-            auto vertex = replace_vertex.first.first;
-            auto cost = replace_vertex.first.second;
-            auto edge = replace_vertex.second;
-        
-            uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
-            uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
-        
-            // 7. Update vertexes
-            // 7.1. Update v1 (set new value)
-            (*data.vertexes)[min_index * 3] = vertex.x;
-            (*data.vertexes)[min_index * 3 + 1] = vertex.y;
-            (*data.vertexes)[min_index * 3 + 2] = vertex.z;
-        
-            // 7.2. Delete v2 (remove from vector)
-            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
-            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
-            data.vertexes->erase(data.vertexes->begin() + max_index * 3);
-        
-            // 8. Update indexes
-            // 8.1. Replace max index on min index
-            std::for_each(data.indexes->begin(), data.indexes->end(),
-                [max_index, min_index](uint32_t& value) { if (value == max_index) value = min_index; });
-            // 8.2. Update indexes greater that max index
-            std::for_each(data.indexes->begin(), data.indexes->end(), 
-                [max_index](uint32_t& value)
-                { if (value > max_index) --value; });
-            // 8.3. Remove degenerate faces
-            auto& shr_ptr = data.indexes;
-            for (int i = 0; i < data.indexes->size(); i += 3) {
-                int cnt = 0;
-                if ((*shr_ptr)[i] == min_index)
-                    ++cnt;
+        return result;
+    }
 
-                if ((*shr_ptr)[i + 1] == min_index)
-                    ++cnt;
+    uint32_t update_mesh(mesh_data data) {
+        // 1. Get vertex with minimal cost
+        std::pair<vertex_and_cost, edge_pair> replace_vertex = data.edge_vertexes->front();
+        data.edge_vertexes->pop_front();
+        uint32_t deleted_faces = 0;
 
-                if ((*shr_ptr)[i + 2] == min_index)
-                    ++cnt;
+        // 2. Get Data
+        auto vertex = replace_vertex.first.first;
+        auto cost = replace_vertex.first.second;
+        auto edge = replace_vertex.second;
 
-                if (cnt >= 2) {
-                    (*shr_ptr)[i] = _UI32_MAX;
-                    (*shr_ptr)[i + 1] = _UI32_MAX;
-                    (*shr_ptr)[i + 2] = _UI32_MAX;
-                }
+        uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
+        uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+
+        // 3. Update vertexes
+        // 3.1. Update v1 (set new value)
+        (*data.vertexes)[min_index * 3] = vertex.x;
+        (*data.vertexes)[min_index * 3 + 1] = vertex.y;
+        (*data.vertexes)[min_index * 3 + 2] = vertex.z;
+
+        // 3.2. Delete v2 (remove from vector)
+        data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+        data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+        data.vertexes->erase(data.vertexes->begin() + max_index * 3);
+
+        // 4. Update indexes
+        // 4.1. Replace max index on min index
+        std::for_each(data.indexes->begin(), data.indexes->end(),
+            [max_index, min_index](uint32_t& value) { if (value == max_index) value = min_index; });
+        // 4.2. Update indexes greater that max index
+        std::for_each(data.indexes->begin(), data.indexes->end(),
+            [max_index](uint32_t& value) { if (value > max_index) --value; });
+        // 4.3. Remove degenerate faces
+        auto& shr_ptr = data.indexes;
+        for (int i = 0; i < data.indexes->size(); i += 3) {
+            int cnt = 0;
+            if ((*shr_ptr)[i] == min_index)
+                ++cnt;
+
+            if ((*shr_ptr)[i + 1] == min_index)
+                ++cnt;
+
+            if ((*shr_ptr)[i + 2] == min_index)
+                ++cnt;
+
+            if (cnt >= 2) {
+                (*shr_ptr)[i] = _UI32_MAX;
+                (*shr_ptr)[i + 1] = _UI32_MAX;
+                (*shr_ptr)[i + 2] = _UI32_MAX;
+                ++deleted_faces;
             }
-
-            std::list<uint32_t> temp_list;
-            for (int i = 0; i < data.indexes->size(); ++i) {
-                if ((*shr_ptr)[i] != _UI32_MAX)
-                    temp_list.push_back((*shr_ptr)[i]);
-            }
-            
-            data.indexes->clear();
-            data.indexes->insert(data.indexes->end(), temp_list.begin(), temp_list.end());
-            temp_list.clear();
-
-            // 9. Clear old metadata
-            data.face_quadric_errors->clear();
-            data.valid_face_ids->clear();
-            data.edge_vertexes->clear();
-            data.valid_edges->clear();
-
-            // TODO: Think about thread guard
-            // TODO: Need to configure for calculations on CPU or GPU
-            // 1. Get valid edges
-            result = get_valid_pairs(data);
-            if (result != SUCCESS)
-                return result;
-
-            // 2. Compute Quadric Errors Matrixes 
-            result = compute_faces_errors(data);
-            if (result != SUCCESS)
-                return result;
-
-            // 3. Compute vertexes for replace with min costs
-            result = compute_costs(data);
-            if (result != SUCCESS)
-                return result;
-
-            if (data.edge_vertexes->size() == 0)
-                break;
-
-            // 4. Sort by costs
-            data.edge_vertexes->sort(
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
         }
 
-        return result;
+        std::list<uint32_t> temp_list;
+        for (int i = 0; i < data.indexes->size(); ++i) {
+            if ((*shr_ptr)[i] != _UI32_MAX)
+                temp_list.push_back((*shr_ptr)[i]);
+        }
+
+        // 5. Rewrite indexes
+        data.indexes->clear();
+        data.indexes->insert(data.indexes->end(), temp_list.begin(), temp_list.end());
+        temp_list.clear();
+
+        return deleted_faces;
     }
 }
