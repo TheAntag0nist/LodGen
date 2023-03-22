@@ -23,7 +23,9 @@ namespace lod_generator{
         data.edge_vertexes = std::make_shared<std::list<std::pair<vertex_and_cost, edge_pair>>>();
         data.valid_edges = std::make_shared<std::vector<std::pair<uint32_t, uint32_t>>>();
         data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
+#ifdef DEBUG
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
+#endif
         data.algorithm_error = error;
 
         // 4. Optimize Geometry
@@ -56,7 +58,9 @@ namespace lod_generator{
         data.edge_vertexes = std::make_shared<std::list<std::pair<vertex_and_cost, edge_pair>>>();
         data.valid_edges = std::make_shared<std::vector<std::pair<uint32_t, uint32_t>>>();
         data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
+#ifdef DEBUG
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
+#endif
         data.algorithm_error = error;
 
         // 4. Optimize Geometry
@@ -89,7 +93,9 @@ namespace lod_generator{
         data.edge_vertexes = std::make_shared<std::list<std::pair<vertex_and_cost, edge_pair>>>();
         data.valid_edges = std::make_shared<std::vector<std::pair<uint32_t, uint32_t>>>();
         data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
+#ifdef DEBUG
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
+#endif
         data.algorithm_error = error;
 
         // 4. Optimize Geometry
