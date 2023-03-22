@@ -11,6 +11,7 @@ include_directories(./inc)
 include_directories(../external/)
 # Set Source Files
 set(SOURCE_FL
+    ./src/algorithms/vertex_cluster.cpp
     ./src/algorithms/basic_alg.cpp
     ./src/core_config.cpp
     ./src/lod_math.cpp

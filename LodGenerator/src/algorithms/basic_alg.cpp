@@ -1,7 +1,7 @@
 #include <algorithms/basic_alg.h>
 
 namespace lod_generator{
-    // TODO: Maybe need refactor (looks like duplicate)
+    // ??: Maybe need refactor (looks like duplicate)
     int lod_QEM_iterative(mesh& src_mesh, mesh& dst_mesh, double error){
         // 1. Get vertexes, indexes and count of faces
         auto vertexes = src_mesh.get_vertexes();
@@ -105,13 +105,5 @@ namespace lod_generator{
         dst_mesh.set_vertexes(*data.vertexes);
         dst_mesh.set_indexes(*data.indexes);
         return result;
-    }
-
-    lod_result faces_normals_thread(mesh_data data){
-        return get_faces_normals(data);
-    }
-
-    lod_result valid_pairs_thread(mesh_data data){
-        return get_valid_pairs(data);
     }
 }
