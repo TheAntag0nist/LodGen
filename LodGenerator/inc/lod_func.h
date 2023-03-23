@@ -1,6 +1,5 @@
 #ifndef LOD_FUNC_H
 #define LOD_FUNC_H
-#include <global.h>
 #include <mesh.h>
 
 namespace lod_generator{

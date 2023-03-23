@@ -2,7 +2,7 @@
 #define CORE_H
 #include <core_config.h>
 #include <lod_func.h>
-#include <global.h>
+#include <errors.h>
 #include <map>
 
 namespace lod_generator{
