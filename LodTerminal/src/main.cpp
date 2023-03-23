@@ -205,8 +205,5 @@ int main(){
     }
 
     std::cout << INFO << "exit program" << std::endl;
-  
-    // ������������ ����� �� �������
-    // core->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
     return 0;
 }
