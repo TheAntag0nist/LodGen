@@ -1,5 +1,4 @@
 #include <iostream>
-#include <core.h>
 #include <iomanip>
 #include <string>
 #include <fstream>
@@ -7,28 +6,30 @@
 #include <vector>
 #include <chrono>
 
-// Глобальные переменные и объекты для облегчения передачи данных по функциям
+#include <LodGenerator.h>
+
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 std::string command;
 std::string filename;
 lod_generator::mesh src_mesh;
 lod_generator::mesh dst_mesh;
 
-// Текстовые константы, выводимые перед текстом
-// пример std::cout << INFO << "Информация" << std::endl
-const std::string INFO =    "[LodTerminal]:[INFO]:> ";      // Общая нейтральная информация
-const std::string ERROR =   "[LodTerminal]:[ERROR]:> ";     // Обработанная ошибка
-const std::string START =   "[LodTerminal]:[START]:> ";     // Начало выполнение процесса
-const std::string END =     "[LodTerminal]:[END]:> ";       // Конец выполнения процесса
-const std::string DEBUG =   "[LodTerminal]:[DEBUG]> ";      // Дебаг инфрмация
-const std::string INPUT =   "[LodTerminal]:> ";             // Приглашение к вводу
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅ std::cout << INFO << "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ" << std::endl
+const std::string INFO =    "[LodTerminal]:[INFO]:> ";      // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+const std::string ERROR =   "[LodTerminal]:[ERROR]:> ";     // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+const std::string START =   "[LodTerminal]:[START]:> ";     // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+const std::string END =     "[LodTerminal]:[END]:> ";       // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+const std::string DEBUG =   "[LodTerminal]:[DEBUG]> ";      // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+const std::string INPUT =   "[LodTerminal]:> ";             // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
 
-// Вывод помощи
+// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 void help() {
     std::cout << INFO << "enter -read to read the.obj file" << std::endl;
     std::cout << INFO << "enter -write to write mesh to .obj file" << std::endl;
 }
 
-// Запись в файл
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
 void memToObj() {
     std::cout << INFO << "writing to file " << filename << std::endl;
 
@@ -45,17 +46,17 @@ void memToObj() {
     file << std::fixed << std::setprecision(10);
 
     std::cout << START << "started writing into a file" << std::endl;
-    // Записываем вертексы
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     for (size_t i = 0; i < vertexes.size(); i += 3) {
         file << "v " << vertexes[i] << " " << vertexes[i + 1] << " " << vertexes[i + 2] << "\n";
     }
 
-    // Записываем нормали
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     //for (size_t i = 0; i < normals.size(); i += 3) {
     //    file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
     //}
 
-    // Записываем индексы
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     for (size_t i = 0; i < indexes.size(); i += 3) {
         file << "f " << indexes[i] + 1 << "//" << " "
             << indexes[i + 1] + 1 << "//" << " "
@@ -66,8 +67,8 @@ void memToObj() {
 
 }
 
-// Чтение из файла
-// !!! НЕВЕРНО ЧИТАЕТ ИНДЕКСЫ !!! 
+// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+// !!! пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ !!! 
 void objToMem() {
     std::cout << INFO << "reading from file " << filename << std::endl;
 
@@ -132,11 +133,11 @@ void objToMem() {
     std::cout << END << "ended reading file" << std::endl;
 }
 
-// Получение имени файла
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 void getFilename() {
-    // пока только добавляет .obj в конец
-    // (??) TODO: подключить библиотеку algorithm и сделать валидацию имени файла...
-    // ...(без пробелов и иных символов) но нужна ли она в научке?
+    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ .obj пїЅ пїЅпїЅпїЅпїЅпїЅ
+    // (??) TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ algorithm пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ...
+    // ...(пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ?
     std::cout << INFO << "enter name of file (without '.obj')" << std::endl;
     std::cout << INPUT;
     std::cin >> filename;
@@ -144,15 +145,15 @@ void getFilename() {
 }
 
 int main(){
-    // Закомменчено чтобы не сломать
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     // auto core = lod_generator::lod_core::get_instance();
 
-    // Текст при запуске
+    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     std::cout << INFO << "enter -help for more information"<< std::endl;
     std::cout << INFO << "enter -exit to exit" << std::endl;
 
-    // Цикл работы с пользователем
-    // Завершается при вводе команды -exit
+    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ -exit
     while (true) {
         std::cout << INPUT;
         std::cin >> command;
@@ -205,7 +206,7 @@ int main(){
 
     std::cout << INFO << "exit program" << std::endl;
   
-    // Закомменчено чтобы не сломать
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     // core->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
     return 0;
 }

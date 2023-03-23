@@ -102,9 +102,11 @@ namespace lod_generator {
     uint32_t update_mesh(mesh_data data);
     lod_result qem_cycle(mesh_data data);
 ///////////////////////////////////////////////////////////////////////////
-// 7. Vertex Reduce Algorithm
+// 7. Vertex Clustering Algorithm
+    int update_mesh_vertex_cluster(mesh_data data);
+    int search_vertex_clusters(mesh_data data);
 
-
+    lod_result optimize_mesh_v_cluster(mesh_data data);
 ///////////////////////////////////////////////////////////////////////////
 }
 
