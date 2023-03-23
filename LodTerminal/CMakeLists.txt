@@ -11,6 +11,7 @@ include_directories(../LodGenerator/inc)
 # Set Source Files
 set(SOURCE_FL
     ./src/main.cpp
+	./src/terminal.cpp
 )
 # Add target library
 add_executable(${PROJECT_NAME} ${SOURCE_FL})
