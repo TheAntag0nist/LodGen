@@ -9,7 +9,9 @@ namespace lod_generator{
         // 1. Quadric Error Metric
         ITERATIVE_QEM,
         HYBRID_QEM,
-        BASIC_QEM
+        BASIC_QEM,
+        // 2. Vertex Cluster 
+        VERTEX_CLUSTER
     };
 
     // 2. LOD's Algorithms Function

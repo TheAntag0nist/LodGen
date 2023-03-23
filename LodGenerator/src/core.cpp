@@ -5,9 +5,12 @@ namespace lod_generator{
     lod_core* lod_core::m_core = nullptr;
     
     lod_core::lod_core(){
+        // 1. QEM
         m_lods_functions[ITERATIVE_QEM] = lod_QEM_iterative;
         m_lods_functions[HYBRID_QEM] = lod_QEM_hybrid;
         m_lods_functions[BASIC_QEM] = lod_QEM;
+        // 2. Vertex Cluster
+        m_lods_functions[VERTEX_CLUSTER] = lod_vertex_cluster;
     }
 
     lod_core* lod_core::get_instance(){

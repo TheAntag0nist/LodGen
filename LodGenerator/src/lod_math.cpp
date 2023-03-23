@@ -112,7 +112,6 @@ namespace lod_generator {
     int get_faces_normals(const mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
-        std::vector<std::shared_ptr<std::thread>> threads;
         
         // 1. Check threads count
         if (num_threads == 0){
@@ -127,21 +126,18 @@ namespace lod_generator {
                 ++split_size;
 
             for(int i = 0; i < num_threads; ++i){
-                std::shared_ptr<std::thread> th(new std::thread(get_faces_normals_cpu, i, split_size, data));
-                threads.push_back(th);
+                std::thread th(get_faces_normals_cpu, i, split_size, data);
+                th.join();
             }
-
-            for(int i = 0; i < num_threads; ++i)
-                threads[i]->join();
         }
 
         return SUCCESS;
     }
-
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
     int get_valid_pairs(const mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
-        std::vector<std::shared_ptr<std::thread>> threads;
 
         // 1. Create result vector for list of valid edges
         std::vector<std::list<std::pair<uint32_t, uint32_t>>> valid_lists;
@@ -165,13 +161,9 @@ namespace lod_generator {
             // Create threads
             for(int i = 0; i < num_threads; ++i){
                 valid_edges_data result_data = { &valid_lists[i], &valid_faces_ids_lists[i]}; 
-                std::shared_ptr<std::thread> th(new std::thread(get_valid_pairs_cpu, i, split_size, data, result_data));
-                threads.push_back(th);
+                std::thread th(get_valid_pairs_cpu, i, split_size, data, result_data);
+                th.join();
             }
-
-            // Join all threads
-            for(int i = 0; i < num_threads; ++i)
-                threads[i]->join();
 
             // Collect all lists
             for(int i = 0; i < num_threads; ++i){
@@ -251,7 +243,6 @@ namespace lod_generator {
     int compute_faces_errors(mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
-        std::vector<std::shared_ptr<std::thread>> threads;
 
         std::vector<std::list<glm::mat4x4>> errors_lists;
         errors_lists.resize(num_threads);
@@ -271,13 +262,9 @@ namespace lod_generator {
 
             // Create threads
             for(int i = 0; i < num_threads; ++i){
-                std::shared_ptr<std::thread> th(new std::thread(compute_faces_errors_cpu, i, split_size, data, &errors_lists[i]));
-                threads.push_back(th);
+                std::thread th(compute_faces_errors_cpu, i, split_size, data, &errors_lists[i]);
+                th.join();
             }
-
-            // Join all threads
-            for(int i = 0; i < num_threads; ++i)
-                threads[i]->join();
 
             // Collect all lists
             for (int i = 0; i < num_threads; ++i)
@@ -448,7 +435,9 @@ namespace lod_generator {
 
             // 5. Clear old metadata
             data.face_quadric_errors->clear();
+#ifdef DEBUG
             data.valid_face_ids->clear();
+#endif
             data.edge_vertexes->clear();
             data.valid_edges->clear();
 
@@ -525,7 +514,9 @@ namespace lod_generator {
 
             // 6. Clear old metadata
             data.face_quadric_errors->clear();
+#ifdef DEBUG
             data.valid_face_ids->clear();
+#endif
             data.edge_vertexes->clear();
             data.valid_edges->clear();
 
@@ -653,16 +644,16 @@ namespace lod_generator {
                 ++cnt;
 
             if (cnt >= 2) {
-                (*shr_ptr)[i] = _UI32_MAX;
-                (*shr_ptr)[i + 1] = _UI32_MAX;
-                (*shr_ptr)[i + 2] = _UI32_MAX;
+                (*shr_ptr)[i] = UINT_MAX;
+                (*shr_ptr)[i + 1] = UINT_MAX;
+                (*shr_ptr)[i + 2] = UINT_MAX;
                 ++deleted_faces;
             }
         }
 
         std::list<uint32_t> temp_list;
         for (int i = 0; i < data.indexes->size(); ++i) {
-            if ((*shr_ptr)[i] != _UI32_MAX)
+            if ((*shr_ptr)[i] != UINT_MAX)
                 temp_list.push_back((*shr_ptr)[i]);
         }
 
@@ -673,4 +664,22 @@ namespace lod_generator {
 
         return deleted_faces;
     }
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+    int update_mesh_vertex_cluster(mesh_data data){
+        
+        return SUCCESS;
+    }
+
+    int search_vertex_clusters(mesh_data data){
+
+        return SUCCESS;
+    }
+    
+    lod_result optimize_mesh_v_cluster(mesh_data data){
+        
+        return SUCCESS;
+    }
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 }
