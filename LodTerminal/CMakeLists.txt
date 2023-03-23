@@ -10,8 +10,9 @@ include_directories(./inc)
 include_directories(../LodGenerator/inc)
 # Set Source Files
 set(SOURCE_FL
+    ./src/terminal.cpp
+    ./src/timer.cpp
     ./src/main.cpp
-	./src/terminal.cpp
 )
 # Add target library
 add_executable(${PROJECT_NAME} ${SOURCE_FL})

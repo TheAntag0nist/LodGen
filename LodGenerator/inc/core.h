@@ -3,6 +3,7 @@
 #include <core_config.h>
 #include <lod_func.h>
 #include <global.h>
+#include <map>
 
 namespace lod_generator{
     // 1. LOD Generator Core

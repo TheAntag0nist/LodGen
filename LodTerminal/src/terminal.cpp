@@ -1,13 +1,11 @@
 #include <terminal.h>
 
-// Вывод помощи
 void help() {
     std::cout << INFO << "enter 'read' to read the.obj file" << std::endl;
     std::cout << INFO << "enter 'write' to write mesh to.obj file" << std::endl;
     std::cout << INFO << "enter 'optimize' to optimize the obj file" << std::endl;
 }
 
-// Запись в файл
 void save_mesh(lod_generator::mesh& dst_mesh, std::string filename) {
     std::cout << INFO << "writing to file " << filename << std::endl;
 
@@ -24,17 +22,10 @@ void save_mesh(lod_generator::mesh& dst_mesh, std::string filename) {
     file << std::fixed << std::setprecision(10);
 
     std::cout << START << "started writing into a file" << std::endl;
-    // Записываем вертексы
     for (size_t i = 0; i < vertexes.size(); i += 3) {
         file << "v " << vertexes[i] << " " << vertexes[i + 1] << " " << vertexes[i + 2] << "\n";
     }
 
-    // Записываем нормали
-    //for (size_t i = 0; i < normals.size(); i += 3) {
-    //    file << "vn " << normals[i] << " " << normals[i + 1] << " " << normals[i + 2] << "\n";
-    //}
-
-    // Записываем индексы
     for (size_t i = 0; i < indexes.size(); i += 3) {
         file << "f " << indexes[i] + 1 << "//" << " "
             << indexes[i + 1] + 1 << "//" << " "
@@ -45,8 +36,6 @@ void save_mesh(lod_generator::mesh& dst_mesh, std::string filename) {
 
 }
 
-// Чтение из файла
-// !!! НЕВЕРНО ЧИТАЕТ ИНДЕКСЫ !!! 
 void load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
     std::cout << INFO << "reading from file " << filename << std::endl;
 
@@ -112,37 +101,35 @@ void load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
 }
 
 void optimize_mesh(lod_generator::mesh& src_mesh, lod_generator::mesh& dst_mesh, std::string filename) {
-    // TODO: Create Timer class
-    auto start_read = std::chrono::high_resolution_clock::now();
+    debug_timer local_timer;
+    
+    // 1. Load Mesh
+    local_timer.start();
     load_mesh(src_mesh, filename);
-    auto finish_read = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed_read = finish_read - start_read;
-    std::cout << "Read Elapsed Time: " << elapsed_read.count() << " ms" << std::endl;
+    local_timer.stop();
+    // 1.1. Load Mesh Elapsed Time
+    std::cout << "Read Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
 
-    auto start = std::chrono::high_resolution_clock::now();
-
+    // 2. LOD Generating
+    local_timer.start();
     auto instance = lod_generator::lod_core::get_instance();
-    instance->generate_lod(src_mesh, dst_mesh, lod_generator::BASIC_ALG);
+    instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
+    local_timer.stop();
+    // 2.1. Generating Elapsed Time
+    std::cout << "Optimization Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
 
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = finish - start;
-    std::cout << "Optimization Elapsed Time: " << elapsed.count() << " ms" << std::endl;
-
+    // 3. Get result filename for save
     filename = get_filename();
 
-    auto start_write = std::chrono::high_resolution_clock::now();
+    // 4. Save Mesh
+    local_timer.start();
     save_mesh(dst_mesh, filename);
-    auto finish_write = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed_write = finish_write - start_write;
-    std::cout << "Write Elapsed Time: " << elapsed_write.count() << " ms" << std::endl;
+    local_timer.stop();
+    // 4.1. Save Mesh Elapsed time
+    std::cout << "Write Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
 }
 
-
-// Получение имени файла
 std::string get_filename() {
-    // пока только добавляет .obj в конец
-    // (??) TODO: подключить библиотеку algorithm и сделать валидацию имени файла...
-    // ...(без пробелов и иных символов) но нужна ли она в научке?
     std::cout << INFO << "enter name of file (without '.obj')" << std::endl;
     std::cout << INPUT;
     std::string filename;
