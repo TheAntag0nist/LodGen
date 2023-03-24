@@ -63,6 +63,10 @@ namespace lod_generator {
         return m_architecture;
     }
 
+    void core_config::set_default_error(double value){
+        m_default_error = value;
+    }
+
     double core_config::get_default_error(){
         return m_default_error;
     }

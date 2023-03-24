@@ -25,6 +25,8 @@ namespace lod_generator{
         void read_config(std::string config_filepath);
 
         COMPUTE_ARCHITECTURE get_architecture();
+
+        void set_default_error(double value);
         double get_default_error();
     };
 }

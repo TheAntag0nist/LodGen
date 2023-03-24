@@ -10,7 +10,7 @@ namespace lod_generator {
     int lod_QEM_iterative(mesh& src_mesh, mesh& dst_mesh, double error);
     int lod_QEM_hybrid(mesh& src_mesh, mesh& dst_mesh, double error);
     int lod_QEM(mesh& src_mesh, mesh& dst_mesh, double error);
-    mesh_data prepare_data(mesh& src_mesh);
+    int prepare_data(mesh& src_mesh, mesh_data& data);
 ///////////////////////////////////////////////////////////////////////////
 }
 

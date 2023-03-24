@@ -18,6 +18,9 @@ namespace lod_generator{
         int generate_lod(mesh& src_mesh, mesh& dst_mesh, LOD_ALG alg_type);
         void read_config_file(std::string config_file);
         static lod_core* get_instance();
+
+        void set_error(double error);
+        double get_error();
     };
 }
 

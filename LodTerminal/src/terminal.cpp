@@ -36,13 +36,13 @@ void save_mesh(lod_generator::mesh& dst_mesh, std::string filename) {
 
 }
 
-void load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
+bool load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
     std::cout << INFO << "reading from file " << filename << std::endl;
 
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cout << ERROR << "failed to open file: " << filename << std::endl;
-        return;
+        return false;
     }
 
     std::cout << START << "started reading file" << std::endl;
@@ -71,25 +71,24 @@ void load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
             normals.push_back(z);
         }
         else if (token == "f") {
-            std::string v1, v2, v3;
-            uint32_t i1, i2, i3;
-            iss >> v1 >> v2 >> v3;
+            std::string indexes_str = "";
+            int triangulation = 0;
+            
+            while(iss >> indexes_str){
+                uint32_t index = 0;
+            
+                std::istringstream vss(indexes_str);
+                std::getline(vss, token, '/');
+                index = std::stoi(token) - 1;
 
-            std::istringstream v1ss(v1);
-            std::getline(v1ss, token, '/');
-            i1 = std::stoi(token) - 1;
+                if(triangulation > 2){
+                    indexes.push_back(indexes[indexes.size() - 1]);
+                    indexes.push_back(indexes[indexes.size() - 4]);
+                }
 
-            std::istringstream v2ss(v2);
-            std::getline(v2ss, token, '/');
-            i2 = std::stoi(token) - 1;
-
-            std::istringstream v3ss(v3);
-            std::getline(v3ss, token, '/');
-            i3 = std::stoi(token) - 1;
-
-            indexes.push_back(i1);
-            indexes.push_back(i2);
-            indexes.push_back(i3);
+                indexes.push_back(index);
+                ++triangulation;
+            }
         }
     }
 
@@ -98,22 +97,33 @@ void load_mesh(lod_generator::mesh& src_mesh, std::string filename) {
     src_mesh.set_vertexes(vertexes);
 
     std::cout << END << "ended reading file" << std::endl;
+    return true;
 }
 
 void optimize_mesh(lod_generator::mesh& src_mesh, lod_generator::mesh& dst_mesh, std::string filename) {
     debug_timer local_timer;
+    double err_value = 0.0f;
     
     // 1. Load Mesh
     local_timer.start();
-    load_mesh(src_mesh, filename);
+    if(!load_mesh(src_mesh, filename))
+        return;
     local_timer.stop();
     // 1.1. Load Mesh Elapsed Time
     std::cout << "Read Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
 
+    // Choose algorithm type
+    auto type = get_type();
+    std::cout << "Algorithm Error: ";
+    std::cin >> err_value;
+    if(err_value < 0.000001)
+        err_value = 0.000001;
+
     // 2. LOD Generating
     local_timer.start();
     auto instance = lod_generator::lod_core::get_instance();
-    instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
+    instance->set_error(err_value);
+    instance->generate_lod(src_mesh, dst_mesh, type);
     local_timer.stop();
     // 2.1. Generating Elapsed Time
     std::cout << "Optimization Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
@@ -136,6 +146,30 @@ std::string get_filename() {
     std::cin >> filename;
     filename = filename + ".obj";
     return filename;
+}
+
+lod_generator::LOD_ALG get_type(){
+    lod_generator::LOD_ALG type = lod_generator::HYBRID_QEM;
+    std::string type_str = "";
+    
+    std::cout << "Types: " << std::endl
+              << "\t1) BASIC_QEM" << std::endl
+              << "\t2) HYBRID_QEM" << std::endl
+              << "\t3) ITERATIVE_QEM" << std::endl
+              << "\t4) VERTEX_CLUSTER" << std::endl;
+    std::cout << "Default type is HYBRID_QEM" << std::endl;
+    std::cout << "Enter type: " << type_str;
+    std::cin >> type_str;
+    if(type_str == "BASIC_QEM" || type_str == "1")
+        type = lod_generator::BASIC_QEM;
+    if(type_str == "HYBRID_QEM" || type_str == "2")
+        type = lod_generator::HYBRID_QEM;
+    if(type_str == "ITERATIVE_QEM" || type_str == "3")
+        type = lod_generator::ITERATIVE_QEM;
+    if(type_str == "VERTEX_CLUSTER" || type_str == "4")
+        type = lod_generator::VERTEX_CLUSTER;
+
+    return type;
 }
 
 std::string check_command(std::string command) {

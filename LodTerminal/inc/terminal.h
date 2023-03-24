@@ -11,9 +11,10 @@ const std::string INPUT = "[LodTerminal]:> ";
 
 void help();
 void save_mesh(lod_generator::mesh& dst_mesh, std::string filename);
-void load_mesh(lod_generator::mesh& src_mesh, std::string filename);
+bool load_mesh(lod_generator::mesh& src_mesh, std::string filename);
 void optimize_mesh(lod_generator::mesh& src_mesh, lod_generator::mesh& dst_mesh, std::string filename);
 
+lod_generator::LOD_ALG get_type();
 std::string check_command(std::string command);
 std::string get_filename();
 
