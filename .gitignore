@@ -414,3 +414,4 @@ CTestTestfile.cmake
 _deps
 out
 *.a
+bin**

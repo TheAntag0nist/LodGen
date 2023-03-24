@@ -6,8 +6,8 @@ std::string command;
 int main(){
     lod_generator::mesh src_mesh;
     lod_generator::mesh dst_mesh;
-
     std::string filename;
+
     std::cout << INFO << "enter -help for more information"<< std::endl;
     std::cout << INFO << "enter -exit to exit" << std::endl;
 
@@ -17,24 +17,34 @@ int main(){
 
         command = check_command(command);
 
+        // 1. Exit Command
         if (command == "exit")
             break;
-        else if (command == "help")
+        // 2. Help Command
+        if (command == "help"){
             help();
-        else if (command == "read") {
+            continue;
+        }
+        // 3. Read Mesh Command
+        if (command == "read") {
             filename = get_filename();
             load_mesh(src_mesh, filename);
+            continue;
         }
-        else if (command == "write") {
+        // 4. Write Mesh Command
+        if (command == "write") {
             filename = get_filename();
             save_mesh(dst_mesh,filename);
+            continue;
         }
-        else if (command == "optimize") {
+        // 5. Optimize Mesh Command
+        if (command == "optimize") {
             filename = get_filename();
             optimize_mesh(src_mesh, dst_mesh, filename);
+            continue;
         }
-        else 
-            std::cout << ERROR << "unknown command, try again" << std::endl;
+         
+        std::cout << ERROR << "unknown command, try again" << std::endl;
     }
 
     std::cout << INFO << "exit program" << std::endl;

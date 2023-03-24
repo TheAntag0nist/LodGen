@@ -1,18 +1,6 @@
 #ifndef CORE_CONFIG_H
 #define CORE_CONFIG_H
-#include <algorithm>
-#include <iostream>
-#include <iomanip>
-#include <cstdlib>
 #include <string>
-#include <thread>
-#include <vector>
-#include <memory>
-#include <chrono>
-#include <ctime>
-#include <list>
-#include <map>
-#include <set>
 
 namespace lod_generator{
     enum COMPUTE_ARCHITECTURE {

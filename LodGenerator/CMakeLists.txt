@@ -13,8 +13,8 @@ include_directories(../external/)
 set(SOURCE_FL
     ./src/algorithms/vertex_cluster.cpp
     ./src/algorithms/basic_alg.cpp
+    ./src/math/lod_math.cpp
     ./src/core_config.cpp
-    ./src/lod_math.cpp
     ./src/core.cpp
     ./src/mesh.cpp
 )

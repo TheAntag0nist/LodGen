@@ -6,7 +6,6 @@
 #include <map>
 
 namespace lod_generator{
-    // 1. LOD Generator Core
     class lod_core{
     private:
         std::map<LOD_ALG, lod_func> m_lods_functions;

@@ -1,6 +1,7 @@
-#include <lod_math.h>
+#include <math/lod_math.h>
 
 namespace lod_generator {
+///////////////////////////////////////////////////////////////////////////
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids) {
         auto& indexes_ptr = data.indexes;
 
@@ -12,21 +13,6 @@ namespace lod_generator {
         }
 
         return SUCCESS;
-    }
-
-    double get_cost(glm::vec4 v, glm::mat4x4 Q) {
-        double result = 0.0f;
-
-        glm::vec4 temp = {
-            v.x * Q[0][0] + v.y * Q[1][0] + v.z * Q[2][0] + v.w * Q[3][0],
-            v.x * Q[0][1] + v.y * Q[1][1] + v.z * Q[2][1] + v.w * Q[3][1],
-            v.x * Q[0][2] + v.y * Q[1][2] + v.z * Q[2][2] + v.w * Q[3][2],
-            v.x * Q[0][3] + v.y * Q[1][3] + v.z * Q[2][3] + v.w * Q[3][3]
-        };
-
-        result = temp.x * v.x + temp.y * v.y + temp.z * v.z + temp.w * v.w;
-
-        return result;
     }
 
     glm::vec3 get_vertex_data(mesh_data data, uint32_t vertex_id) {
@@ -134,7 +120,7 @@ namespace lod_generator {
         return SUCCESS;
     }
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+namespace qem {
     int get_valid_pairs(const mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
@@ -408,9 +394,22 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    // Description :
-    // 1. Quality: HIGH
-    // 2. Speed:   LOW
+    double get_cost(glm::vec4 v, glm::mat4x4 Q) {
+        double result = 0.0f;
+
+        glm::vec4 temp = {
+            v.x * Q[0][0] + v.y * Q[1][0] + v.z * Q[2][0] + v.w * Q[3][0],
+            v.x * Q[0][1] + v.y * Q[1][1] + v.z * Q[2][1] + v.w * Q[3][1],
+            v.x * Q[0][2] + v.y * Q[1][2] + v.z * Q[2][2] + v.w * Q[3][2],
+            v.x * Q[0][3] + v.y * Q[1][3] + v.z * Q[2][3] + v.w * Q[3][3]
+        };
+
+        result = temp.x * v.x + temp.y * v.y + temp.z * v.z + temp.w * v.w;
+
+        return result;
+    }
+
+
     lod_result optimize_mesh_iterative(mesh_data data) {
         // 0. Data Zone
         lod_result result = SUCCESS;
@@ -664,9 +663,10 @@ namespace lod_generator {
 
         return deleted_faces;
     }
+}
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-    int update_mesh_vertex_cluster(mesh_data data){
+namespace vertex_cluster {
+    uint32_t update_mesh(mesh_data data){
         
         return SUCCESS;
     }
@@ -676,10 +676,10 @@ namespace lod_generator {
         return SUCCESS;
     }
     
-    lod_result optimize_mesh_v_cluster(mesh_data data){
+    lod_result optimize_mesh(mesh_data data){
         
         return SUCCESS;
     }
-///////////////////////////////////////////////////////////////////////////
+}
 ///////////////////////////////////////////////////////////////////////////
 }
