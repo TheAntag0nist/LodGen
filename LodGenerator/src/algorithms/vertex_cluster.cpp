@@ -24,6 +24,6 @@ namespace lod_generator{
 
         dst_mesh.set_vertexes(*data.vertexes);
         dst_mesh.set_indexes(*data.indexes);
-        return SUCCESS;
+        return result;
     }
 }

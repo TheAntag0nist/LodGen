@@ -9,7 +9,7 @@ namespace lod_generator {
 	}
 
 	void mesh::set_vertexes(double* vert_arr, uint32_t size){
-		for(int i=0;i<size;i++)
+		for(uint32_t i = 0; i < size; ++i)
 			m_vertexes.push_back(vert_arr[i]);
 	}
 
@@ -18,7 +18,7 @@ namespace lod_generator {
 	}
 
 	void mesh::set_indexes(uint32_t* ind_arr, uint32_t size){
-		for(int i=0;i<size;i++)
+		for(uint32_t i = 0; i < size; ++i)
 			m_indexes.push_back(ind_arr[i]);
 	}
 
@@ -27,7 +27,7 @@ namespace lod_generator {
 	}
 	
 	void mesh::set_normals(double* norm_arr, uint32_t size){
-		for(int i=0;i<size;i++)
+		for(uint32_t i = 0; i < size; ++i)
 			m_normals.push_back(norm_arr[i]);
 	}
 

@@ -36,7 +36,7 @@ namespace lod_generator {
 
         // 2. Get the file size
         fseek(fl, 0, SEEK_END);
-        long file_size = ftell(fl);
+        size_t file_size = ftell(fl);
         rewind(fl);
 
         // 3. Allocate memory for file content

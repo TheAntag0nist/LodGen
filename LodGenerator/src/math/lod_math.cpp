@@ -5,7 +5,7 @@ namespace lod_generator {
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids) {
         auto& indexes_ptr = data.indexes;
 
-        for (int i = 0; i < indexes_ptr->size(); i += 3) {
+        for (size_t i = 0; i < indexes_ptr->size(); i += 3) {
             if (vertex_id == (*indexes_ptr)[i] ||
                 vertex_id == (*indexes_ptr)[i + 1] ||
                 vertex_id == (*indexes_ptr)[i + 2])
@@ -58,8 +58,6 @@ namespace lod_generator {
     }
 
     int get_face_normal(const tr_data& data, face_args& args){
-        glm::dvec3 face_normal = {0,0,0};
-
         glm::dvec3 tmp_1 = data.v2 - data.v1;
         glm::dvec3 tmp_2 = data.v3 - data.v1;
 
@@ -74,15 +72,13 @@ namespace lod_generator {
     int get_faces_normals_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data){
         // 0. Data Section
         uint32_t start_block = thread_id * split_size;
-        auto& vertexes = data.vertexes;
-        auto& indexes = data.indexes;
         auto& normals = data.normals;
 
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < normals->size() ? temp_block : normals->size();
+        size_t end_block = temp_block < normals->size() ? temp_block : normals->size();
 
         // 1. Calculate normals
-        for(int index_id = start_block; index_id < end_block; ++index_id){
+        for(size_t index_id = start_block; index_id < end_block; ++index_id){
             face_data f_data = get_face_data(data, index_id);
             tr_data t_data = get_triangle_data(data, f_data);
 
@@ -166,20 +162,18 @@ namespace qem {
     int get_valid_pairs_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, valid_edges_data result_data){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
 
         // Result Struct Pointers
-        auto valid_faces_ids = result_data.valid_faces_ids;
         auto valid_edges = result_data.valid_edges;
 
         // Calculate size
         auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
+        size_t end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Calculations
-        for(int i = start_block; i < end_block; ++i) {
+        for(size_t i = start_block; i < end_block; ++i) {
             face_data f_data = get_face_data(data, i);
             tr_data t_data = get_triangle_data(data, f_data);
 
@@ -191,36 +185,20 @@ namespace qem {
             glm::dvec3 v_ac = t_data.v1 - t_data.v3;
             glm::dvec3 v_bc = t_data.v2 - t_data.v3;
 
-            // Add valid edge
-            bool add_valid_face = false;
-
             auto len_ab = glm::length(v_ab);
             auto len_ac = glm::length(v_ac);
             auto len_bc = glm::length(v_bc);
 
-            if(len_ab < data.algorithm_error){
+            if(len_ab < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v1_index, v2_index));
-                add_valid_face = true;
-            }
             
             // Add valid edge
-            if(len_ac < data.algorithm_error){
+            if(len_ac < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v1_index, v3_index));
-                add_valid_face = true;
-            }
 
             // Add valid edge
-            if(len_bc < data.algorithm_error){
+            if(len_bc < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v2_index, v3_index));
-                add_valid_face = true;
-            }
-
-#ifdef _DEBUG
-            // Add valid face id
-            // TODO: Need to rewrite for multithreading
-            if(add_valid_face)
-                valid_faces_ids->push_back(i);
-#endif
         }
 
         return SUCCESS;
@@ -263,15 +241,14 @@ namespace qem {
     int compute_faces_errors_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<glm::mat4x4>* errors){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
 
         auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
+        size_t end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Compute faces errors
-        for(int i = start_block; i < end_block; ++i){
+        for(size_t i = start_block; i < end_block; ++i){
             face_data face_data = get_face_data(data, i);
             tr_data t_data = get_triangle_data(data, face_data);
 
@@ -305,10 +282,10 @@ namespace qem {
         // Calculate size
         auto valid_edges_cnt = valid_edges->size();
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < valid_edges_cnt ? temp_block : valid_edges_cnt;
+        size_t end_block = temp_block < valid_edges_cnt ? temp_block : valid_edges_cnt;
 
         // 1. Compute costs
-        for (int i = start_block; i < end_block; ++i) {
+        for (size_t i = start_block; i < end_block; ++i) {
             edge_pair& edge = (*valid_edges)[i];
             std::list<uint32_t> faces_ids_v1;
             std::list<uint32_t> faces_ids_v2;
@@ -489,19 +466,22 @@ namespace qem {
                 if (used_indexes.find(min_index) == used_indexes.end() &&
                     used_indexes.find(max_index) == used_indexes.end()) {
                     // 4. Update vector with vertexes and indexes
-                    auto deleted_faces = update_mesh(data);
+                    update_mesh(data);
                     change_flag = true;
 
                     // 5. Update edges
                     for (auto& item : (*data.edge_vertexes)) {
-                        item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
-                        item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                        if(item.second.first > max_index)
+                            --item.second.first;
+                        if(item.second.second > max_index)
+                            --item.second.second;
                     }
 
                     // TODO: Maybe rewrite using <algorithm>
                     std::list temp_list(used_indexes.begin(), used_indexes.end());
                     for (auto& item : temp_list)
-                        item = item > max_index ? --item : item;
+                        if(item > max_index)
+                            --item;
                     used_indexes.clear();
                     used_indexes.insert(temp_list.begin(), temp_list.end());
 
@@ -551,18 +531,21 @@ namespace qem {
             if (used_indexes.find(min_index) == used_indexes.end() &&
                 used_indexes.find(max_index) == used_indexes.end()) {
                 // 4. Update vector with vertexes and indexes
-                auto deleted_faces = update_mesh(data);
+                update_mesh(data);
 
                 // 5. Update edges
                 for (auto& item : (*data.edge_vertexes)) {
-                    item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
-                    item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                    if(item.second.first > max_index)
+                        --item.second.first;
+                    if(item.second.second > max_index)
+                        --item.second.second;
                 }
 
                 // TODO: Maybe rewrite using <algorithm>
                 std::list temp_list(used_indexes.begin(), used_indexes.end());
                 for (auto& item : temp_list)
-                    item = item > max_index ? --item: item;
+                    if(item > max_index)
+                        --item;
                 used_indexes.clear();
                 used_indexes.insert(temp_list.begin(), temp_list.end());
                 
@@ -605,7 +588,6 @@ namespace qem {
 
         // 2. Get Data
         auto vertex = replace_vertex.first.first;
-        auto cost = replace_vertex.first.second;
         auto edge = replace_vertex.second;
 
         uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
@@ -631,7 +613,7 @@ namespace qem {
             [max_index](uint32_t& value) { if (value > max_index) --value; });
         // 4.3. Remove degenerate faces
         auto& shr_ptr = data.indexes;
-        for (int i = 0; i < data.indexes->size(); i += 3) {
+        for (size_t i = 0; i < data.indexes->size(); i += 3) {
             int cnt = 0;
             if ((*shr_ptr)[i] == min_index)
                 ++cnt;
@@ -651,7 +633,7 @@ namespace qem {
         }
 
         std::list<uint32_t> temp_list;
-        for (int i = 0; i < data.indexes->size(); ++i) {
+        for (size_t i = 0; i < data.indexes->size(); ++i) {
             if ((*shr_ptr)[i] != UINT_MAX)
                 temp_list.push_back((*shr_ptr)[i]);
         }
