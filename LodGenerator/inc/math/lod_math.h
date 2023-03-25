@@ -22,6 +22,7 @@ typedef std::list<uint32_t> cluster;
         std::shared_ptr<std::vector<uint32_t>> indexes;
         std::shared_ptr<std::vector<double>> vertexes;
         // 4.1.2 Error
+        uint32_t max_iterations;
         double algorithm_error;
 ///////////////////////////////////////////////////////////////////////////
     // 4.2. QEM Algorithm Data

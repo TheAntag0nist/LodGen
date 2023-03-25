@@ -56,6 +56,7 @@ namespace lod_generator{
         data.edge_vertexes = std::make_shared<std::list<std::pair<vertex_and_cost, edge_pair>>>();
         data.valid_edges   = std::make_shared<std::vector<std::pair<uint32_t, uint32_t>>>();
         data.face_quadric_errors = std::make_shared<std::vector<glm::mat4x4>>();
+        data.max_iterations = 9 * (vertexes.size() / 10.0f);
 #ifdef DEBUG
         data.valid_face_ids = std::make_shared<std::vector<uint32_t>>();
 #endif

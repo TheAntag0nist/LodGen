@@ -390,7 +390,8 @@ namespace qem {
     lod_result optimize_mesh_iterative(mesh_data data) {
         // 0. Data Zone
         lod_result result = SUCCESS;
-
+        uint32_t iter = 0;
+        
         // 1. Call Basic Cycle
         result = qem_cycle(data);
         if (result != SUCCESS)
@@ -399,17 +400,12 @@ namespace qem {
         if (data.edge_vertexes->size() == 0)
             return result;
 
-        // 2. Sort by costs
-        data.edge_vertexes->sort(
-            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b)
-            { return a.first.second < b.first.second; });
-        
-        // 3. While can optimize -> try to optimize
-        while (data.edge_vertexes->size() > 0) {
-            // 4. Update vector with vertexes and indexes
+        // 2. While can optimize -> try to optimize
+        while (data.edge_vertexes->size() > 0 && iter < data.max_iterations) {
+            // 3. Update vector with vertexes and indexes
             update_mesh(data);
 
-            // 5. Clear old metadata
+            // 4. Clear old metadata
             data.face_quadric_errors->clear();
 #ifdef DEBUG
             data.valid_face_ids->clear();
@@ -417,7 +413,7 @@ namespace qem {
             data.edge_vertexes->clear();
             data.valid_edges->clear();
 
-            // 6. Call Basic Cycle
+            // 5. Call Basic Cycle
             result = qem_cycle(data);
             if (result != SUCCESS)
                 break;
@@ -425,10 +421,7 @@ namespace qem {
             if (data.edge_vertexes->size() == 0)
                 break;
 
-            // 7. Sort by costs
-            data.edge_vertexes->sort(
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
-                { return a.first.second < b.first.second; });
+            ++iter;
         }
 
         return result;
@@ -436,12 +429,11 @@ namespace qem {
 
     lod_result optimize_mesh_hybrid(mesh_data data) {
         // 0. Data Zone
-        const uint32_t MAX_ITER = 32768;
         lod_result result = SUCCESS;
         bool change_flag = true;
-        uint32_t iter_cnt = 0;
+        uint32_t iter = 0;
 
-        while (change_flag && iter_cnt < MAX_ITER) {
+        while (change_flag && iter < data.max_iterations) {
             std::set<uint32_t> used_indexes;
             change_flag = false;
             // 1. Call Basic Cycle
@@ -453,13 +445,14 @@ namespace qem {
             if (data.edge_vertexes->size() == 0)
                 break;
 
-            // 2. Sort by costs
-            data.edge_vertexes->sort(
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+            // 2. Find Min Elem
+            auto min_elem = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                    { return a.first.second < b.first.second; });
 
             // 3. While can optimize -> try to optimize
             while (data.edge_vertexes->size() > 0) {
-                auto& edge = data.edge_vertexes->front().second;
+                auto& edge = (*min_elem).second;
                 uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
                 uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
 
@@ -498,8 +491,7 @@ namespace qem {
 #endif
             data.edge_vertexes->clear();
             data.valid_edges->clear();
-
-            ++iter_cnt;
+            ++iter;
         }
 
         return result;
@@ -509,6 +501,7 @@ namespace qem {
         // 0. Data Zone
         std::set<uint32_t> used_indexes;
         lod_result result = SUCCESS;
+        uint32_t iter = 0;
 
         // 1. Call Basic Cycle
         result = qem_cycle(data);
@@ -523,7 +516,7 @@ namespace qem {
             [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
 
         // 3. While can optimize -> try to optimize
-        while (data.edge_vertexes->size() > 0) {
+        while (data.edge_vertexes->size() > 0 && iter < data.max_iterations) {
             auto& edge = data.edge_vertexes->front().second;
             uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
             uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
@@ -553,6 +546,7 @@ namespace qem {
                 used_indexes.insert(min_index);
             } else
                 data.edge_vertexes->pop_front();
+            ++iter;
         }
 
         return result;
@@ -582,8 +576,11 @@ namespace qem {
 
     uint32_t update_mesh(mesh_data data) {
         // 1. Get vertex with minimal cost
-        std::pair<vertex_and_cost, edge_pair> replace_vertex = data.edge_vertexes->front();
-        data.edge_vertexes->pop_front();
+        auto iter = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                { return a.first.second < b.first.second; });
+        std::pair<vertex_and_cost, edge_pair> replace_vertex = *iter;
+        data.edge_vertexes->erase(iter);
         uint32_t deleted_faces = 0;
 
         // 2. Get Data
