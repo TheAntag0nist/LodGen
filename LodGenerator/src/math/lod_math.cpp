@@ -24,6 +24,7 @@ namespace lod_generator {
             (*vertexes_ptr)[real_vertex_id + 1],
             (*vertexes_ptr)[real_vertex_id + 2]
         );
+        
         return result;
     }
 
