@@ -11,3 +11,13 @@ To use the LodGenerator library, you will need to follow these steps:
 * Create an instance of the LodGenerator class.
 * Call the generateLod() method with the original mesh data and desired LOD levels to generate simplified meshes.
 * Use the generated simplified meshes for rendering at different distances.
+
+```cpp
+#include "LodGenerator.h"
+// Your code here
+mesh src_mesh;
+mesh dst_mesh;
+// Code for reading source file vertexes and indices
+auto instance = lod_generator::lod_core::get_instance();
+instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
+```

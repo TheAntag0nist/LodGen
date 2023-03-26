@@ -2,10 +2,10 @@
 #define CORE_H
 #include <core_config.h>
 #include <lod_func.h>
-#include <global.h>
+#include <errors.h>
+#include <map>
 
 namespace lod_generator{
-    // 1. LOD Generator Core
     class lod_core{
     private:
         std::map<LOD_ALG, lod_func> m_lods_functions;
@@ -18,6 +18,9 @@ namespace lod_generator{
         int generate_lod(mesh& src_mesh, mesh& dst_mesh, LOD_ALG alg_type);
         void read_config_file(std::string config_file);
         static lod_core* get_instance();
+
+        void set_error(double error);
+        double get_error();
     };
 }
 

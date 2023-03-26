@@ -10,6 +10,8 @@ include_directories(./inc)
 include_directories(../LodGenerator/inc)
 # Set Source Files
 set(SOURCE_FL
+    ./src/terminal.cpp
+    ./src/timer.cpp
     ./src/main.cpp
 )
 # Add target library

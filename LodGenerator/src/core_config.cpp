@@ -36,7 +36,7 @@ namespace lod_generator {
 
         // 2. Get the file size
         fseek(fl, 0, SEEK_END);
-        long file_size = ftell(fl);
+        size_t file_size = ftell(fl);
         rewind(fl);
 
         // 3. Allocate memory for file content
@@ -61,6 +61,10 @@ namespace lod_generator {
 
     COMPUTE_ARCHITECTURE core_config::get_architecture(){
         return m_architecture;
+    }
+
+    void core_config::set_default_error(double value){
+        m_default_error = value;
     }
 
     double core_config::get_default_error(){

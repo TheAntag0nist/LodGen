@@ -1,10 +1,11 @@
-#include <lod_math.h>
+#include <math/lod_math.h>
 
 namespace lod_generator {
+///////////////////////////////////////////////////////////////////////////
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids) {
         auto& indexes_ptr = data.indexes;
 
-        for (int i = 0; i < indexes_ptr->size(); i += 3) {
+        for (size_t i = 0; i < indexes_ptr->size(); i += 3) {
             if (vertex_id == (*indexes_ptr)[i] ||
                 vertex_id == (*indexes_ptr)[i + 1] ||
                 vertex_id == (*indexes_ptr)[i + 2])
@@ -12,21 +13,6 @@ namespace lod_generator {
         }
 
         return SUCCESS;
-    }
-
-    double get_cost(glm::vec4 v, glm::mat4x4 Q) {
-        double result = 0.0f;
-
-        glm::vec4 temp = {
-            v.x * Q[0][0] + v.y * Q[1][0] + v.z * Q[2][0] + v.w * Q[3][0],
-            v.x * Q[0][1] + v.y * Q[1][1] + v.z * Q[2][1] + v.w * Q[3][1],
-            v.x * Q[0][2] + v.y * Q[1][2] + v.z * Q[2][2] + v.w * Q[3][2],
-            v.x * Q[0][3] + v.y * Q[1][3] + v.z * Q[2][3] + v.w * Q[3][3]
-        };
-
-        result = temp.x * v.x + temp.y * v.y + temp.z * v.z + temp.w * v.w;
-
-        return result;
     }
 
     glm::vec3 get_vertex_data(mesh_data data, uint32_t vertex_id) {
@@ -38,6 +24,7 @@ namespace lod_generator {
             (*vertexes_ptr)[real_vertex_id + 1],
             (*vertexes_ptr)[real_vertex_id + 2]
         );
+        
         return result;
     }
 
@@ -72,8 +59,6 @@ namespace lod_generator {
     }
 
     int get_face_normal(const tr_data& data, face_args& args){
-        glm::dvec3 face_normal = {0,0,0};
-
         glm::dvec3 tmp_1 = data.v2 - data.v1;
         glm::dvec3 tmp_2 = data.v3 - data.v1;
 
@@ -88,15 +73,13 @@ namespace lod_generator {
     int get_faces_normals_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data){
         // 0. Data Section
         uint32_t start_block = thread_id * split_size;
-        auto& vertexes = data.vertexes;
-        auto& indexes = data.indexes;
         auto& normals = data.normals;
 
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < normals->size() ? temp_block : normals->size();
+        size_t end_block = temp_block < normals->size() ? temp_block : normals->size();
 
         // 1. Calculate normals
-        for(int index_id = start_block; index_id < end_block; ++index_id){
+        for(size_t index_id = start_block; index_id < end_block; ++index_id){
             face_data f_data = get_face_data(data, index_id);
             tr_data t_data = get_triangle_data(data, f_data);
 
@@ -134,7 +117,7 @@ namespace lod_generator {
         return SUCCESS;
     }
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+namespace qem {
     int get_valid_pairs(const mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
@@ -180,20 +163,18 @@ namespace lod_generator {
     int get_valid_pairs_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, valid_edges_data result_data){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
 
         // Result Struct Pointers
-        auto valid_faces_ids = result_data.valid_faces_ids;
         auto valid_edges = result_data.valid_edges;
 
         // Calculate size
         auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
+        size_t end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Calculations
-        for(int i = start_block; i < end_block; ++i) {
+        for(size_t i = start_block; i < end_block; ++i) {
             face_data f_data = get_face_data(data, i);
             tr_data t_data = get_triangle_data(data, f_data);
 
@@ -205,36 +186,20 @@ namespace lod_generator {
             glm::dvec3 v_ac = t_data.v1 - t_data.v3;
             glm::dvec3 v_bc = t_data.v2 - t_data.v3;
 
-            // Add valid edge
-            bool add_valid_face = false;
-
             auto len_ab = glm::length(v_ab);
             auto len_ac = glm::length(v_ac);
             auto len_bc = glm::length(v_bc);
 
-            if(len_ab < data.algorithm_error){
+            if(len_ab < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v1_index, v2_index));
-                add_valid_face = true;
-            }
             
             // Add valid edge
-            if(len_ac < data.algorithm_error){
+            if(len_ac < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v1_index, v3_index));
-                add_valid_face = true;
-            }
 
             // Add valid edge
-            if(len_bc < data.algorithm_error){
+            if(len_bc < data.algorithm_error)
                 valid_edges->push_back(std::make_pair(v2_index, v3_index));
-                add_valid_face = true;
-            }
-
-#ifdef _DEBUG
-            // Add valid face id
-            // TODO: Need to rewrite for multithreading
-            if(add_valid_face)
-                valid_faces_ids->push_back(i);
-#endif
         }
 
         return SUCCESS;
@@ -277,15 +242,14 @@ namespace lod_generator {
     int compute_faces_errors_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data, std::list<glm::mat4x4>* errors){
         // 0. Data Zone
         auto start_block = thread_id * split_size;
-        auto& vertexes_ptr = data.vertexes;
         auto& indexes_ptr = data.indexes;
 
         auto faces_cnt = indexes_ptr->size() / 3;
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
+        size_t end_block = temp_block < faces_cnt ? temp_block : faces_cnt;
 
         // 1. Compute faces errors
-        for(int i = start_block; i < end_block; ++i){
+        for(size_t i = start_block; i < end_block; ++i){
             face_data face_data = get_face_data(data, i);
             tr_data t_data = get_triangle_data(data, face_data);
 
@@ -319,10 +283,10 @@ namespace lod_generator {
         // Calculate size
         auto valid_edges_cnt = valid_edges->size();
         auto temp_block = start_block + split_size;
-        auto end_block = temp_block < valid_edges_cnt ? temp_block : valid_edges_cnt;
+        size_t end_block = temp_block < valid_edges_cnt ? temp_block : valid_edges_cnt;
 
         // 1. Compute costs
-        for (int i = start_block; i < end_block; ++i) {
+        for (size_t i = start_block; i < end_block; ++i) {
             edge_pair& edge = (*valid_edges)[i];
             std::list<uint32_t> faces_ids_v1;
             std::list<uint32_t> faces_ids_v2;
@@ -408,13 +372,27 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    // Description :
-    // 1. Quality: HIGH
-    // 2. Speed:   LOW
+    double get_cost(glm::vec4 v, glm::mat4x4 Q) {
+        double result = 0.0f;
+
+        glm::vec4 temp = {
+            v.x * Q[0][0] + v.y * Q[1][0] + v.z * Q[2][0] + v.w * Q[3][0],
+            v.x * Q[0][1] + v.y * Q[1][1] + v.z * Q[2][1] + v.w * Q[3][1],
+            v.x * Q[0][2] + v.y * Q[1][2] + v.z * Q[2][2] + v.w * Q[3][2],
+            v.x * Q[0][3] + v.y * Q[1][3] + v.z * Q[2][3] + v.w * Q[3][3]
+        };
+
+        result = temp.x * v.x + temp.y * v.y + temp.z * v.z + temp.w * v.w;
+
+        return result;
+    }
+
+
     lod_result optimize_mesh_iterative(mesh_data data) {
         // 0. Data Zone
         lod_result result = SUCCESS;
-
+        uint32_t iter = 0;
+        
         // 1. Call Basic Cycle
         result = qem_cycle(data);
         if (result != SUCCESS)
@@ -423,17 +401,12 @@ namespace lod_generator {
         if (data.edge_vertexes->size() == 0)
             return result;
 
-        // 2. Sort by costs
-        data.edge_vertexes->sort(
-            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b)
-            { return a.first.second < b.first.second; });
-        
-        // 3. While can optimize -> try to optimize
-        while (data.edge_vertexes->size() > 0) {
-            // 4. Update vector with vertexes and indexes
+        // 2. While can optimize -> try to optimize
+        while (data.edge_vertexes->size() > 0 && iter < data.max_iterations) {
+            // 3. Update vector with vertexes and indexes
             update_mesh(data);
 
-            // 5. Clear old metadata
+            // 4. Clear old metadata
             data.face_quadric_errors->clear();
 #ifdef DEBUG
             data.valid_face_ids->clear();
@@ -441,7 +414,7 @@ namespace lod_generator {
             data.edge_vertexes->clear();
             data.valid_edges->clear();
 
-            // 6. Call Basic Cycle
+            // 5. Call Basic Cycle
             result = qem_cycle(data);
             if (result != SUCCESS)
                 break;
@@ -449,10 +422,7 @@ namespace lod_generator {
             if (data.edge_vertexes->size() == 0)
                 break;
 
-            // 7. Sort by costs
-            data.edge_vertexes->sort(
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
-                { return a.first.second < b.first.second; });
+            ++iter;
         }
 
         return result;
@@ -460,12 +430,11 @@ namespace lod_generator {
 
     lod_result optimize_mesh_hybrid(mesh_data data) {
         // 0. Data Zone
-        const uint32_t MAX_ITER = 32768;
         lod_result result = SUCCESS;
         bool change_flag = true;
-        uint32_t iter_cnt = 0;
+        uint32_t iter = 0;
 
-        while (change_flag && iter_cnt < MAX_ITER) {
+        while (change_flag && iter < data.max_iterations) {
             std::set<uint32_t> used_indexes;
             change_flag = false;
             // 1. Call Basic Cycle
@@ -477,32 +446,36 @@ namespace lod_generator {
             if (data.edge_vertexes->size() == 0)
                 break;
 
-            // 2. Sort by costs
-            data.edge_vertexes->sort(
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+            // 2. Find Min Elem
+            auto min_elem = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                    { return a.first.second < b.first.second; });
 
             // 3. While can optimize -> try to optimize
             while (data.edge_vertexes->size() > 0) {
-                auto& edge = data.edge_vertexes->front().second;
+                auto& edge = (*min_elem).second;
                 uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
                 uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
 
                 if (used_indexes.find(min_index) == used_indexes.end() &&
                     used_indexes.find(max_index) == used_indexes.end()) {
                     // 4. Update vector with vertexes and indexes
-                    auto deleted_faces = update_mesh(data);
+                    update_mesh(data);
                     change_flag = true;
 
                     // 5. Update edges
                     for (auto& item : (*data.edge_vertexes)) {
-                        item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
-                        item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                        if(item.second.first > max_index)
+                            --item.second.first;
+                        if(item.second.second > max_index)
+                            --item.second.second;
                     }
 
                     // TODO: Maybe rewrite using <algorithm>
                     std::list temp_list(used_indexes.begin(), used_indexes.end());
                     for (auto& item : temp_list)
-                        item = item > max_index ? --item : item;
+                        if(item > max_index)
+                            --item;
                     used_indexes.clear();
                     used_indexes.insert(temp_list.begin(), temp_list.end());
 
@@ -519,8 +492,7 @@ namespace lod_generator {
 #endif
             data.edge_vertexes->clear();
             data.valid_edges->clear();
-
-            ++iter_cnt;
+            ++iter;
         }
 
         return result;
@@ -530,6 +502,7 @@ namespace lod_generator {
         // 0. Data Zone
         std::set<uint32_t> used_indexes;
         lod_result result = SUCCESS;
+        uint32_t iter = 0;
 
         // 1. Call Basic Cycle
         result = qem_cycle(data);
@@ -544,7 +517,7 @@ namespace lod_generator {
             [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
 
         // 3. While can optimize -> try to optimize
-        while (data.edge_vertexes->size() > 0) {
+        while (data.edge_vertexes->size() > 0 && iter < data.max_iterations) {
             auto& edge = data.edge_vertexes->front().second;
             uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
             uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
@@ -552,18 +525,21 @@ namespace lod_generator {
             if (used_indexes.find(min_index) == used_indexes.end() &&
                 used_indexes.find(max_index) == used_indexes.end()) {
                 // 4. Update vector with vertexes and indexes
-                auto deleted_faces = update_mesh(data);
+                update_mesh(data);
 
                 // 5. Update edges
                 for (auto& item : (*data.edge_vertexes)) {
-                    item.second.first = item.second.first > max_index ? --item.second.first : item.second.first;
-                    item.second.second = item.second.second > max_index ? --item.second.second : item.second.second;
+                    if(item.second.first > max_index)
+                        --item.second.first;
+                    if(item.second.second > max_index)
+                        --item.second.second;
                 }
 
                 // TODO: Maybe rewrite using <algorithm>
                 std::list temp_list(used_indexes.begin(), used_indexes.end());
                 for (auto& item : temp_list)
-                    item = item > max_index ? --item: item;
+                    if(item > max_index)
+                        --item;
                 used_indexes.clear();
                 used_indexes.insert(temp_list.begin(), temp_list.end());
                 
@@ -571,6 +547,7 @@ namespace lod_generator {
                 used_indexes.insert(min_index);
             } else
                 data.edge_vertexes->pop_front();
+            ++iter;
         }
 
         return result;
@@ -600,13 +577,15 @@ namespace lod_generator {
 
     uint32_t update_mesh(mesh_data data) {
         // 1. Get vertex with minimal cost
-        std::pair<vertex_and_cost, edge_pair> replace_vertex = data.edge_vertexes->front();
-        data.edge_vertexes->pop_front();
+        auto iter = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
+                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                { return a.first.second < b.first.second; });
+        std::pair<vertex_and_cost, edge_pair> replace_vertex = *iter;
+        data.edge_vertexes->erase(iter);
         uint32_t deleted_faces = 0;
 
         // 2. Get Data
         auto vertex = replace_vertex.first.first;
-        auto cost = replace_vertex.first.second;
         auto edge = replace_vertex.second;
 
         uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
@@ -632,7 +611,7 @@ namespace lod_generator {
             [max_index](uint32_t& value) { if (value > max_index) --value; });
         // 4.3. Remove degenerate faces
         auto& shr_ptr = data.indexes;
-        for (int i = 0; i < data.indexes->size(); i += 3) {
+        for (size_t i = 0; i < data.indexes->size(); i += 3) {
             int cnt = 0;
             if ((*shr_ptr)[i] == min_index)
                 ++cnt;
@@ -652,7 +631,7 @@ namespace lod_generator {
         }
 
         std::list<uint32_t> temp_list;
-        for (int i = 0; i < data.indexes->size(); ++i) {
+        for (size_t i = 0; i < data.indexes->size(); ++i) {
             if ((*shr_ptr)[i] != UINT_MAX)
                 temp_list.push_back((*shr_ptr)[i]);
         }
@@ -664,9 +643,10 @@ namespace lod_generator {
 
         return deleted_faces;
     }
+}
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-    int update_mesh_vertex_cluster(mesh_data data){
+namespace vertex_cluster {
+    uint32_t update_mesh(mesh_data data){
         
         return SUCCESS;
     }
@@ -676,10 +656,10 @@ namespace lod_generator {
         return SUCCESS;
     }
     
-    lod_result optimize_mesh_v_cluster(mesh_data data){
+    lod_result optimize_mesh(mesh_data data){
         
         return SUCCESS;
     }
-///////////////////////////////////////////////////////////////////////////
+}
 ///////////////////////////////////////////////////////////////////////////
 }

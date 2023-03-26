@@ -34,4 +34,12 @@ namespace lod_generator{
     void lod_core::read_config_file(std::string config_file){
         m_core_config.read_config(config_file);
     }
+
+    void lod_core::set_error(double error){
+        m_core_config.set_default_error(error);
+    }
+
+    double lod_core::get_error(){
+        return m_core_config.get_default_error();
+    }
 }
