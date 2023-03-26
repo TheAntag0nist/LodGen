@@ -14,11 +14,12 @@ namespace lod_generator {
         cl::Device m_current_device; 
         cl::Context m_context;
 
-        cl::Program::Sources m_sources;
-        cl::Program m_program;
-
+        std::map<uint32_t, std::string> m_program_name;
+        std::map<std::string, uint32_t> m_program_id;
+        std::vector<cl::Program::Sources> m_sources;
+        std::vector<cl::Buffer> m_program_buffer;
+        std::vector<cl::Program> m_programs;
         cl::CommandQueue m_queue;
-        cl::Buffer m_buffer;
 
         static gpu_core* m_core;
         gpu_core();
@@ -26,7 +27,6 @@ namespace lod_generator {
     private:
         int get_platforms(std::vector<cl::Platform>& platforms, bool display = true);
         int find_platform(cl::Platform& platform, std::vector<cl::Platform>& platforms);
-
         int get_devices(std::vector<cl::Device>& devices, cl::Platform& platform, bool display = true);
 
     public:
@@ -34,12 +34,14 @@ namespace lod_generator {
         gpu_core& get_instance();
         
         int init();
-        int clear_source();
-        int load_source(std::string src);
+        int clear_programs();
+        int add_program(std::string program_name);
+        uint32_t get_program_id(std::string program_name);
+        std::string get_program_name(uint32_t program_id);
+        int load_source(uint32_t programm_id, std::string src);
 
-        int build_program();
-        int set_program_data();
-        int execute_program();
+        int build_program(uint32_t programm_id);
+        int execute_program(uint32_t programm_id);
     };
 }
 

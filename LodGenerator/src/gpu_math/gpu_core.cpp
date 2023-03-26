@@ -90,19 +90,49 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    int gpu_core::clear_source(){
+    int gpu_core::add_program(std::string program_name){
+        m_sources.push_back(cl::Program::Sources());
+        m_program_buffer.push_back(cl::Buffer());
+        m_programs.push_back(cl::Program());
+
+        m_program_name[m_programs.size() - 1] = program_name;
+        m_program_id[program_name] = m_programs.size() - 1;
+        return SUCCESS;
+    }
+
+    uint32_t gpu_core::get_program_id(std::string program_name){
+        if(m_program_id.find(program_name) != m_program_id.end())
+            return m_program_id[program_name];
+
+        return -1;
+    }
+
+    std::string gpu_core::get_program_name(uint32_t program_id){
+        if(m_program_name.find(program_id) != m_program_name.end())
+            return m_program_name[program_id];
+
+        return "";
+    }
+
+    int gpu_core::clear_programs(){
+        m_program_buffer.clear();
+        m_program_id.clear();
+        m_programs.clear();
         m_sources.clear();
         return SUCCESS;
     }
 
-    int gpu_core::load_source(std::string src){
-        m_sources.push_back(src);
+    int gpu_core::load_source(uint32_t programm_id, std::string src){
+        auto program_src = m_sources[programm_id];
+        program_src.push_back(src);
         return SUCCESS;
     }
 
-    int gpu_core::build_program(){
-        m_program = cl::Program(m_context, m_sources);
-        
+    int gpu_core::build_program(uint32_t programm_id){
+        auto& program_src = m_sources[programm_id];
+        m_programs[programm_id] = cl::Program(m_context, program_src);
+        auto& m_program = m_programs[programm_id];
+
         if (m_program.build({m_current_device}) != CL_SUCCESS) {
             std::cout << "Error building: " << m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_current_device) << std::endl;
             return ERR_CANT_BUILD_PROG;
@@ -111,13 +141,11 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    int gpu_core::set_program_data(){
-        // TODO: implement
-        return SUCCESS;
-    }
+    int gpu_core::execute_program(uint32_t programm_id){
+        auto name = get_program_name(programm_id);
+        auto& programm = m_programs[programm_id];
 
-    int gpu_core::execute_program(){
-        // TODO: implement
+        cl::Kernel kernel_programm = cl::Kernel(programm, name.c_str());
         return SUCCESS;
     }
 }
