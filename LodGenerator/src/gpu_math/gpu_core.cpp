@@ -137,7 +137,7 @@ namespace lod_generator {
         m_programs.push_back(cl::Program(m_context, program_src));
         cl::Program program = m_programs[programm_id];
 
-#ifdef __UNIX__
+#ifdef unix
         auto result = program.build(m_current_device);
 #elif WIN32
         auto result = program.build({m_current_device});

@@ -6,7 +6,7 @@
     #include <OpenCL/cl.hpp>
 #elif WIN32
     #include <CL/cl.hpp>
-#elif UNIX
+#elif unix
     #include <CL/opencl.hpp>
 #endif
 
