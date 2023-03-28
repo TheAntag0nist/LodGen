@@ -17,6 +17,7 @@ void optimize_mesh(lod_generator::mesh& src_mesh, lod_generator::mesh& dst_mesh,
 lod_generator::LOD_ALG get_type();
 std::string check_command(std::string command);
 std::string get_filename();
+void launch_tests();
 
 #endif 
 

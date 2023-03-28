@@ -179,3 +179,7 @@ std::string check_command(std::string command) {
     std::cout << DEBUG << command << std::endl;
     return command;
 }
+
+void launch_tests(){
+    lod_generator::test_gpu_core();
+}
