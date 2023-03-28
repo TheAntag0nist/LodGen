@@ -167,7 +167,7 @@ namespace lod_generator {
             ++arg_id;
         }
 
-        m_queue.enqueueNDRangeKernel(kernel_programm, cl::NullRange, cl::NDRange(4), cl::NDRange(1));
+        m_queue.enqueueNDRangeKernel(kernel_programm, cl::NullRange, cl::NDRange(m_global_size), cl::NDRange(m_local_size));
         m_queue.finish();
         
         // Read and display
@@ -180,5 +180,13 @@ namespace lod_generator {
             std::cout << "\tarr[" << i << "] = " << values[i] << std::endl;
 
         return SUCCESS;
+    }
+
+    void gpu_core::set_local_size(uint32_t local_size){
+        m_local_size = local_size;
+    }
+
+    void gpu_core::set_global_size(uint32_t global_size){
+        m_global_size = global_size;
     }
 }

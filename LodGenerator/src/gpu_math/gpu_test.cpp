@@ -25,6 +25,9 @@ namespace lod_generator {
         core.load_source(id, source);
         core.build_program(id);
 
+        core.set_global_size(4);
+        core.set_local_size(1);
+
         core.add_argument(id, 0, arrays[0]);
         core.add_argument(id, 1, arrays[1]);
         core.add_argument(id, 2, arrays[2]);

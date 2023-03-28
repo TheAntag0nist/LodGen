@@ -27,6 +27,8 @@ namespace lod_generator {
         std::vector<std::list<cl::Buffer>> m_program_buffer;
         std::vector<cl::Program> m_programs;
         cl::CommandQueue m_queue;
+        uint32_t m_global_size;
+        uint32_t m_local_size;
 
         static uint32_t m_programs_counter;
         static gpu_core* m_core;
@@ -50,6 +52,9 @@ namespace lod_generator {
 
         int build_program(uint32_t programm_id);
         int execute_program(uint32_t programm_id);
+        
+        void set_local_size(uint32_t local_size);
+        void set_global_size(uint32_t global_size);
 
         template <class T>
         int add_argument(uint32_t programm_id, uint32_t arg_id, std::vector<T>& data){
