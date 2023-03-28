@@ -43,6 +43,11 @@ int main(){
             optimize_mesh(src_mesh, dst_mesh, filename);
             continue;
         }
+        // 6. Launch Tests
+        if(command == "tests"){
+            launch_tests();
+            continue;
+        }
          
         std::cout << ERROR << "unknown command, try again" << std::endl;
     }
