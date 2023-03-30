@@ -9,7 +9,7 @@
 #endif
 
 namespace lod_generator {
-    typedef std::pair<uint32_t, uint32_t> program_ranges;
+    typedef std::pair<uint32_t, void*> argument;
 
     class gpu_core {
     private:
@@ -24,7 +24,8 @@ namespace lod_generator {
         std::map<std::string, uint32_t> m_program_id;
         std::vector<cl::Program::Sources> m_sources;
         
-        std::vector<std::list<cl::Buffer>> m_program_buffer;
+        std::vector<std::map<uint32_t, cl::Buffer>> m_program_buffer;
+        std::vector<std::map<uint32_t, argument>> m_program_args;
         std::vector<cl::Program> m_programs;
         cl::CommandQueue m_queue;
         uint32_t m_global_size;
@@ -52,19 +53,42 @@ namespace lod_generator {
 
         int build_program(uint32_t programm_id);
         int execute_program(uint32_t programm_id);
-        
+        int flush_program_data(uint32_t programm_id);
+        int flush_queue();
+
         void set_local_size(uint32_t local_size);
         void set_global_size(uint32_t global_size);
 
         template <class T>
+        int get_output(uint32_t programm_id, uint32_t buff_id, std::vector<T>& output){
+            auto& map_buffers = m_program_buffer[programm_id];
+            auto& bf = map_buffers[buff_id];
+            
+            m_queue.enqueueReadBuffer(bf, CL_TRUE, 0,
+                output.size() * sizeof(T), output.data());
+            return SUCCESS;
+        }
+
+        template <class T>
         int add_argument(uint32_t programm_id, uint32_t arg_id, std::vector<T>& data){
-            auto& list_buffers = m_program_buffer[programm_id];
+            auto& map_buffers = m_program_buffer[programm_id];
             auto size = sizeof(T) * data.size();
             auto ptr = data.data();
 
-            list_buffers.push_back(cl::Buffer(m_context, CL_MEM_READ_WRITE, size));
-            auto& buffer = list_buffers.back();
+            map_buffers[arg_id] = cl::Buffer(m_context, CL_MEM_READ_WRITE, size);
+            auto& buffer = map_buffers[arg_id];
             m_queue.enqueueWriteBuffer(buffer, CL_TRUE, 0, size, ptr);
+            return SUCCESS;
+        }
+
+        template <class T>
+        int add_argument(uint32_t programm_id, uint32_t arg_id, T& data){
+            auto& map_args = m_program_args[programm_id];
+            auto size = sizeof(T);
+            auto ptr = new T;
+            *ptr = data;
+
+            map_args[arg_id] = argument( size, ptr);
             return SUCCESS;
         }
     };

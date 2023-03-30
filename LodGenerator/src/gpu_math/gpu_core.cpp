@@ -91,7 +91,8 @@ namespace lod_generator {
     }
 
     int gpu_core::add_program(std::string program_name){
-        m_program_buffer.push_back(std::list<cl::Buffer>());
+        m_program_buffer.push_back(std::map<uint32_t, cl::Buffer>());
+        m_program_args.push_back(std::map<uint32_t, argument>());
         m_sources.push_back(cl::Program::Sources());
 
         m_program_name[m_programs_counter] = program_name;
@@ -159,26 +160,36 @@ namespace lod_generator {
         auto programm = m_programs[programm_id];
 
         cl::Kernel kernel_programm = cl::Kernel(programm, name.c_str());
-        auto& list = m_program_buffer[programm_id];
-        cl_uint arg_id = 0;
-        
-        for(auto& bf : list){
-            kernel_programm.setArg(arg_id, bf);    
-            ++arg_id;
+        auto& map_args = m_program_args[programm_id];
+        auto& map_bf = m_program_buffer[programm_id];
+
+        // 1. Set Buffers
+        for(auto& bf : map_bf)
+            kernel_programm.setArg(bf.first, bf.second);    
+        // 2. Set Arguments
+        for(auto& arg : map_args){
+            auto id = arg.first;
+            auto size = arg.second.first;
+            auto ptr = arg.second.second;
+            kernel_programm.setArg(id, size, ptr);
         }
 
         m_queue.enqueueNDRangeKernel(kernel_programm, cl::NullRange, cl::NDRange(m_global_size), cl::NDRange(m_local_size));
         m_queue.finish();
-        
-        // Read and display
-        auto& last_bf = list.back();
-        std::vector<float> values = { 0, 0, 0, 0};
-        m_queue.enqueueReadBuffer(last_bf, CL_TRUE, 0, sizeof(float) * 4, values.data());
-        m_queue.finish();
+        return SUCCESS;
+    }
 
-        for(size_t i = 0; i < values.size(); ++i)
-            std::cout << "\tarr[" << i << "] = " << values[i] << std::endl;
+    int gpu_core::flush_program_data(uint32_t programm_id){
+        m_program_buffer[programm_id].clear();
+        auto& args = m_program_args[programm_id];
+        for(auto& item : args)
+            delete item.second.second;
+        args.clear();
+        return SUCCESS;
+    }
 
+    int gpu_core::flush_queue(){
+        m_queue.flush();
         return SUCCESS;
     }
 
