@@ -179,3 +179,18 @@ std::string check_command(std::string command) {
     std::cout << DEBUG << command << std::endl;
     return command;
 }
+
+void launch_tests(){
+    std::string filepath;
+    lod_generator::mesh src_mesh;
+    std::cout << "Enter file path: ";
+    std::cin >> filepath;
+
+    if(!load_mesh(src_mesh, filepath)){
+        std::cout << "[ERR]:> Can't load mesh" << std::endl;
+        return;
+    }
+
+    lod_generator::test_gpu_core();
+    lod_generator::test_get_valid_pairs(src_mesh);
+}
