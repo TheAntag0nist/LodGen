@@ -4,7 +4,9 @@
 #include <global.h>
 #ifdef __APPLE__
     #include <OpenCL/cl.hpp>
-#else
+#elif WIN32
+    #include <CL/cl.hpp>
+#elif UNIX
     #include <CL/opencl.hpp>
 #endif
 

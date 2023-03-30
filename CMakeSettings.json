@@ -12,8 +12,13 @@
       "ctestCommandArgs": "",
       "variables": [
         {
-          "name": "CMAKE_MAKE_PROGRAM",
-          "value": "E:/.VS 2022/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
+          "name": "OpenCL_INCLUDE_DIR",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\include",
+          "type": "PATH"
+        },
+        {
+          "name": "OpenCL_LIBRARY",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\lib\\x86_64\\opencl.lib",
           "type": "FILEPATH"
         }
       ]
@@ -30,9 +35,14 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
         {
-          "name": "CMAKE_BUILD_TYPE",
-          "value": "RelWithDebInfo",
-          "type": "STRING"
+          "name": "OpenCL_INCLUDE_DIR",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\include",
+          "type": "PATH"
+        },
+        {
+          "name": "OpenCL_LIBRARY",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\lib\\x86_64\\opencl.lib",
+          "type": "FILEPATH"
         }
       ]
     }

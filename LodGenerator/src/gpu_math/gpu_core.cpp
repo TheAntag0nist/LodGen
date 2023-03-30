@@ -124,16 +124,24 @@ namespace lod_generator {
     }
 
     int gpu_core::load_source(uint32_t programm_id, std::string src){
+#ifdef __UNIX__
         m_sources[programm_id].push_back(src);
+#elif WIN32
+        m_sources[programm_id].push_back({ src.c_str(), src.size()});
+#endif
         return SUCCESS;
     }
 
-    int gpu_core::build_program(uint32_t programm_id){
+    int gpu_core::build_program(uint32_t programm_id) {
         auto& program_src = m_sources[programm_id];
         m_programs.push_back(cl::Program(m_context, program_src));
-        auto program = m_programs[programm_id];
+        cl::Program program = m_programs[programm_id];
 
+#ifdef __UNIX__
         auto result = program.build(m_current_device);
+#elif WIN32
+        auto result = program.build({m_current_device});
+#endif
         if (result != CL_SUCCESS) {
             std::cout << "[GPU_CORE]:> Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_current_device, &result) << std::endl;
             if(result == CL_BUILD_PROGRAM_FAILURE){
