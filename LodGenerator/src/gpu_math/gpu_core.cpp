@@ -17,9 +17,14 @@ namespace lod_generator {
     int gpu_core::get_platforms(std::vector<cl::Platform>& platforms, bool display){
         cl::Platform::get(&platforms);
         
-        if(platforms.size() == 0){
-            std::cout <<"[GPU_CORE]:> No platforms found. Check OpenCL installation!\n";
+        if (platforms.size() == 0) {
+            std::cout << "[GPU_CORE]:> No platforms found. Check OpenCL installation!\n";
             return ERR_NO_PLATFORMS;
+        } else {
+            std::cout << "[GPU_CORE]:> Platforms Count: " << platforms.size() << std::endl;
+            for (auto& platform : platforms) {
+                std::cout << "  Platform Name: " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
+            }
         }
 
         if(display)
@@ -41,6 +46,7 @@ namespace lod_generator {
                 enviroment.find("OpenCL 3.") != std::string::npos) {
                 // Note: an OpenCL 3.x platform may not support all required features!
                 platform = p;
+                break;
             }
         }
 
