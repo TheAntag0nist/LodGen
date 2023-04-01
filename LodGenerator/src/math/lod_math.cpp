@@ -190,16 +190,22 @@ namespace qem {
             auto len_ac = glm::length(v_ac);
             auto len_bc = glm::length(v_bc);
 
-            if(len_ab < data.algorithm_error)
+            if(len_ab < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v1_index, v2_index));
+                continue;
+            }
             
             // Add valid edge
-            if(len_ac < data.algorithm_error)
+            if(len_ac < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v1_index, v3_index));
+                continue;
+            }
 
             // Add valid edge
-            if(len_bc < data.algorithm_error)
+            if(len_bc < data.algorithm_error){
                 valid_edges->push_back(std::make_pair(v2_index, v3_index));
+                continue;;
+            }
         }
 
         return SUCCESS;

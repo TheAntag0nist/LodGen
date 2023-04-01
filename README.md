@@ -21,3 +21,10 @@ mesh dst_mesh;
 auto instance = lod_generator::lod_core::get_instance();
 instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
 ```
+
+# How to use LodTerminal
+LodTerminal is an example of a program using the LodGenerator library. Currently it only works with the obj format.
+Commands: 
++ help - display all commands
++ optimize - requests a geometry file for optimization and a file to save to
++ tests - calls tests (for example, a calculation test on a video card)

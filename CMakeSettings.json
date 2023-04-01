@@ -1,0 +1,50 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "OpenCL_INCLUDE_DIR",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\include",
+          "type": "PATH"
+        },
+        {
+          "name": "OpenCL_LIBRARY",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\lib\\x86_64\\opencl.lib",
+          "type": "FILEPATH"
+        }
+      ]
+    },
+    {
+      "name": "x64-Release",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        {
+          "name": "OpenCL_INCLUDE_DIR",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\include",
+          "type": "PATH"
+        },
+        {
+          "name": "OpenCL_LIBRARY",
+          "value": "C:\\Program Files (x86)\\OCL_SDK_Light\\lib\\x86_64\\opencl.lib",
+          "type": "FILEPATH"
+        }
+      ]
+    }
+  ]
+}

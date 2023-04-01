@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 set(PROJECT_NAME LodProject)
 # Set project
-project(
-    ${PROJECT_NAME}
-    VERSION 1.0.0
-)
+project(${PROJECT_NAME})
 # C++ Version
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

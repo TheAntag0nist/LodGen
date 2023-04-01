@@ -17,9 +17,14 @@ namespace lod_generator {
     int gpu_core::get_platforms(std::vector<cl::Platform>& platforms, bool display){
         cl::Platform::get(&platforms);
         
-        if(platforms.size() == 0){
-            std::cout <<"[GPU_CORE]:> No platforms found. Check OpenCL installation!\n";
+        if (platforms.size() == 0) {
+            std::cout << "[GPU_CORE]:> No platforms found. Check OpenCL installation!\n";
             return ERR_NO_PLATFORMS;
+        } else {
+            std::cout << "[GPU_CORE]:> Platforms Count: " << platforms.size() << std::endl;
+            for (auto& platform : platforms) {
+                std::cout << "  Platform Name: " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
+            }
         }
 
         if(display)
@@ -41,6 +46,7 @@ namespace lod_generator {
                 enviroment.find("OpenCL 3.") != std::string::npos) {
                 // Note: an OpenCL 3.x platform may not support all required features!
                 platform = p;
+                break;
             }
         }
 
@@ -91,7 +97,8 @@ namespace lod_generator {
     }
 
     int gpu_core::add_program(std::string program_name){
-        m_program_buffer.push_back(std::list<cl::Buffer>());
+        m_program_buffer.push_back(std::map<uint32_t, cl::Buffer>());
+        m_program_args.push_back(std::map<uint32_t, argument>());
         m_sources.push_back(cl::Program::Sources());
 
         m_program_name[m_programs_counter] = program_name;
@@ -123,16 +130,24 @@ namespace lod_generator {
     }
 
     int gpu_core::load_source(uint32_t programm_id, std::string src){
+#ifdef __linux__
         m_sources[programm_id].push_back(src);
+#elif _WIN32
+        m_sources[programm_id].push_back({ src.c_str(), src.size()});
+#endif
         return SUCCESS;
     }
 
-    int gpu_core::build_program(uint32_t programm_id){
+    int gpu_core::build_program(uint32_t programm_id) {
         auto& program_src = m_sources[programm_id];
         m_programs.push_back(cl::Program(m_context, program_src));
-        auto program = m_programs[programm_id];
+        cl::Program program = m_programs[programm_id];
 
+#ifdef __linux__
         auto result = program.build(m_current_device);
+#elif _WIN32
+        auto result = program.build({m_current_device});
+#endif
         if (result != CL_SUCCESS) {
             std::cout << "[GPU_CORE]:> Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_current_device, &result) << std::endl;
             if(result == CL_BUILD_PROGRAM_FAILURE){
@@ -159,26 +174,44 @@ namespace lod_generator {
         auto programm = m_programs[programm_id];
 
         cl::Kernel kernel_programm = cl::Kernel(programm, name.c_str());
-        auto& list = m_program_buffer[programm_id];
-        cl_uint arg_id = 0;
-        
-        for(auto& bf : list){
-            kernel_programm.setArg(arg_id, bf);    
-            ++arg_id;
+        auto& map_args = m_program_args[programm_id];
+        auto& map_bf = m_program_buffer[programm_id];
+
+        // 1. Set Buffers
+        for(auto& bf : map_bf)
+            kernel_programm.setArg(bf.first, bf.second);    
+        // 2. Set Arguments
+        for(auto& arg : map_args){
+            auto id = arg.first;
+            auto size = arg.second.first;
+            auto ptr = arg.second.second;
+            kernel_programm.setArg(id, size, ptr);
         }
 
-        m_queue.enqueueNDRangeKernel(kernel_programm, cl::NullRange, cl::NDRange(4), cl::NDRange(1));
+        m_queue.enqueueNDRangeKernel(kernel_programm, cl::NullRange, cl::NDRange(m_global_size), cl::NDRange(m_local_size));
         m_queue.finish();
-        
-        // Read and display
-        auto& last_bf = list.back();
-        std::vector<float> values = { 0, 0, 0, 0};
-        m_queue.enqueueReadBuffer(last_bf, CL_TRUE, 0, sizeof(float) * 4, values.data());
-        m_queue.finish();
-
-        for(size_t i = 0; i < values.size(); ++i)
-            std::cout << "\tarr[" << i << "] = " << values[i] << std::endl;
-
         return SUCCESS;
+    }
+
+    int gpu_core::flush_program_data(uint32_t programm_id){
+        m_program_buffer[programm_id].clear();
+        auto& args = m_program_args[programm_id];
+        for(auto& item : args)
+            delete item.second.second;
+        args.clear();
+        return SUCCESS;
+    }
+
+    int gpu_core::flush_queue(){
+        m_queue.flush();
+        return SUCCESS;
+    }
+
+    void gpu_core::set_local_size(uint32_t local_size){
+        m_local_size = local_size;
+    }
+
+    void gpu_core::set_global_size(uint32_t global_size){
+        m_global_size = global_size;
     }
 }
