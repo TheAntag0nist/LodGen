@@ -124,9 +124,9 @@ namespace lod_generator {
     }
 
     int gpu_core::load_source(uint32_t programm_id, std::string src){
-#ifdef __UNIX__
+#ifdef __linux__
         m_sources[programm_id].push_back(src);
-#elif WIN32
+#elif _WIN32
         m_sources[programm_id].push_back({ src.c_str(), src.size()});
 #endif
         return SUCCESS;
@@ -137,9 +137,9 @@ namespace lod_generator {
         m_programs.push_back(cl::Program(m_context, program_src));
         cl::Program program = m_programs[programm_id];
 
-#ifdef unix
+#ifdef __linux__
         auto result = program.build(m_current_device);
-#elif WIN32
+#elif _WIN32
         auto result = program.build({m_current_device});
 #endif
         if (result != CL_SUCCESS) {
