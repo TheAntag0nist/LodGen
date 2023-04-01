@@ -415,3 +415,4 @@ _deps
 out
 *.a
 bin**
+!models**
