@@ -19,7 +19,8 @@ mesh src_mesh;
 mesh dst_mesh;
 // Code for reading source file vertexes and indices
 auto instance = lod_generator::lod_core::get_instance();
-instance->generate_lod(src_mesh, dst_mesh, lod_generator::HYBRID_QEM);
+instance->set_error(err_value);
+instance->generate_lod(src_mesh, dst_mesh, type);
 ```
 
 # How to use LodTerminal
