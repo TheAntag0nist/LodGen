@@ -22,6 +22,8 @@ auto instance = lod_generator::lod_core::get_instance();
 instance->set_error(err_value);
 instance->generate_lod(src_mesh, dst_mesh, type);
 ```
+# Examples
+![Error Aspect](https://github.com/TheAntag0nist/LodGen/blob/master/docs/resources/qem.png)
 
 # How to use LodTerminal
 LodTerminal is an example of a program using the LodGenerator library. Currently it only works with the obj format.
