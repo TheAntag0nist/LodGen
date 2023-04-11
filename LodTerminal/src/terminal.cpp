@@ -126,7 +126,8 @@ void optimize_mesh(lod_generator::mesh& src_mesh, lod_generator::mesh& dst_mesh,
     instance->generate_lod(src_mesh, dst_mesh, type);
     local_timer.stop();
     // 2.1. Generating Elapsed Time
-    std::cout << "Optimization Elapsed Time: " << local_timer.to_string() << " ms" << std::endl;
+    std::cout << "Optimization Elapsed Time: " << local_timer.to_string() << " ms" 
+              << " (" << local_timer.to_string(SEC) << " sec)" << std::endl;
 
     // 3. Get result filename for save
     filename = get_filename();
@@ -144,7 +145,6 @@ std::string get_filename() {
     std::cout << INPUT;
     std::string filename;
     std::cin >> filename;
-    filename = filename + ".obj";
     return filename;
 }
 
