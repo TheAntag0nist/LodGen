@@ -663,7 +663,7 @@ namespace vertex_cluster {
     }
     
     lod_result optimize_mesh(mesh_data data){
-        
+        // TODO: Реализовать
         return SUCCESS;
     }
 }

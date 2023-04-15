@@ -8,12 +8,11 @@
 namespace lod_generator {
 ///////////////////////////////////////////////////////////////////////////
 // 3. Global Type Definitions
-typedef std::list<uint32_t> cluster;
-///////////////////////////////////////////////////////////////////////////
-// 4. Global Structures
+    typedef std::list<uint32_t> cluster;
     typedef std::pair<glm::vec3, double> vertex_and_cost;
     typedef std::pair<uint32_t, uint32_t> edge_pair;
-
+///////////////////////////////////////////////////////////////////////////
+// 4. Global Structures
     // 4.1. mesh_data - it's optimization metadata
     //         used in all optimization algorithms
     typedef struct mesh_data{
@@ -37,8 +36,8 @@ typedef std::list<uint32_t> cluster;
         std::shared_ptr<std::list<std::pair<vertex_and_cost, edge_pair>>> edge_vertexes;
 ///////////////////////////////////////////////////////////////////////////
     // 4.3. Vertexes Clustering Algorithm Data
-    std::shared_ptr<std::set<uint32_t>> used_vertexes;
-    std::shared_ptr<std::list<cluster>> clusters;
+        std::shared_ptr<std::set<uint32_t>> used_vertexes;
+        std::shared_ptr<std::list<cluster>> clusters;
 ///////////////////////////////////////////////////////////////////////////
     } mesh_data;
 
