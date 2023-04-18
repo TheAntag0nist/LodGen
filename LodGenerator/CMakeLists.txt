@@ -15,7 +15,7 @@ include_directories(../external/)
 # Set Source Files
 set(SOURCE_FL
     ./src/algorithms/vertex_cluster.cpp
-    ./src/algorithms/basic_alg.cpp
+    ./src/algorithms/qem_alg.cpp
     ./src/gpu_math/gpu_test.cpp
     ./src/gpu_math/gpu_core.cpp
     ./src/math/lod_math.cpp

@@ -92,7 +92,7 @@ namespace lod_generator {
         return SUCCESS;
     }
 
-    int get_faces_normals(const mesh_data data){
+    int get_faces_normals(mesh_data data){
         // 0. Data zone section
         int num_threads = std::thread::hardware_concurrency();
         
@@ -113,6 +113,11 @@ namespace lod_generator {
                 th.join();
             }
         }
+
+        return SUCCESS;
+    }
+
+    int get_vertex_weights(mesh_data data) {
 
         return SUCCESS;
     }
@@ -414,7 +419,7 @@ namespace qem {
 
             // 4. Clear old metadata
             data.face_quadric_errors->clear();
-#ifdef DEBUG
+#ifdef _DEBUG
             data.valid_face_ids->clear();
 #endif
             data.edge_vertexes->clear();
@@ -448,57 +453,59 @@ namespace qem {
             if (result != SUCCESS)
                 return result;
 
-            // If no need optimize
+            // If no need optimize then stop executing algorithm
             if (data.edge_vertexes->size() == 0)
                 break;
 
-            // 2. Find Min Elem
-            auto min_elem = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
-                [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
-                    { return a.first.second < b.first.second; });
-
-            // 3. While can optimize -> try to optimize
+            // 2. While can optimize -> try to optimize
             while (data.edge_vertexes->size() > 0) {
+                // 3. Find Min Elem
+                auto min_elem = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
+                    [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+                    { return a.first.second < b.first.second; });
+                
                 auto& edge = (*min_elem).second;
                 uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
                 uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
 
+                // If not process that node or linked node then optimize mesh
                 if (used_indexes.find(min_index) == used_indexes.end() &&
                     used_indexes.find(max_index) == used_indexes.end()) {
                     // 4. Update vector with vertexes and indexes
                     update_mesh(data);
                     change_flag = true;
+                    ++iter;
 
                     // 5. Update edges
                     for (auto& item : (*data.edge_vertexes)) {
-                        if(item.second.first > max_index)
+                        if (item.second.first > max_index)
                             --item.second.first;
-                        if(item.second.second > max_index)
+                        if (item.second.second > max_index)
                             --item.second.second;
                     }
 
                     // TODO: Maybe rewrite using <algorithm>
                     std::list temp_list(used_indexes.begin(), used_indexes.end());
                     for (auto& item : temp_list)
-                        if(item > max_index)
+                        if (item > max_index)
                             --item;
                     used_indexes.clear();
                     used_indexes.insert(temp_list.begin(), temp_list.end());
 
                     used_indexes.insert(max_index);
                     used_indexes.insert(min_index);
-                } else
-                    data.edge_vertexes->pop_front();
+                }
+                else
+                    data.edge_vertexes->erase(min_elem);
             }
 
             // 6. Clear old metadata
             data.face_quadric_errors->clear();
-#ifdef DEBUG
+#ifdef _DEBUG
             data.valid_face_ids->clear();
 #endif
             data.edge_vertexes->clear();
             data.valid_edges->clear();
-            ++iter;
         }
 
         return result;
@@ -586,6 +593,7 @@ namespace qem {
         auto iter = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
                 [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
                 { return a.first.second < b.first.second; });
+
         std::pair<vertex_and_cost, edge_pair> replace_vertex = *iter;
         data.edge_vertexes->erase(iter);
         uint32_t deleted_faces = 0;
@@ -657,7 +665,7 @@ namespace vertex_cluster {
         return SUCCESS;
     }
 
-    int search_vertex_clusters(mesh_data data){
+    int search_vertex_clusters(mesh_data data) {
 
         return SUCCESS;
     }
