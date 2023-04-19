@@ -15,16 +15,16 @@ namespace lod_generator {
 // 4. Global Structures
     // 4.1. mesh_data - it's optimization metadata
     //         used in all optimization algorithms
-    typedef struct mesh_data{
+    typedef struct mesh_data {
         // 4.1.1. Global Data
-        std::shared_ptr<std::vector<glm::dvec3>> normals; 
+        std::shared_ptr<std::vector<glm::dvec3>> normals;
         std::shared_ptr<std::vector<uint32_t>> indexes;
         std::shared_ptr<std::vector<double>> vertexes;
         // 4.1.2 Error
         uint32_t max_iterations;
         double algorithm_error;
-///////////////////////////////////////////////////////////////////////////
-    // 4.2. QEM Algorithm Data
+        ///////////////////////////////////////////////////////////////////////////
+        // 4.2. QEM Algorithm Data
         // 4.2.1. Valid Edges and Faces
         std::shared_ptr<std::vector<edge_pair>> valid_edges;
 #ifdef _DEBUG
@@ -34,11 +34,10 @@ namespace lod_generator {
         std::shared_ptr<std::vector<glm::mat4x4>> face_quadric_errors;
         // 4.2.3. Edges Costs and Vertexes
         std::shared_ptr<std::list<std::pair<vertex_and_cost, edge_pair>>> edge_vertexes;
-///////////////////////////////////////////////////////////////////////////
-    // 4.3. Vertexes Clustering Algorithm Data
+        ///////////////////////////////////////////////////////////////////////////
+        // 4.3. Vertexes Clustering Algorithm Data
         std::shared_ptr<std::set<uint32_t>> used_vertexes;
         std::shared_ptr<std::list<cluster>> clusters;
-///////////////////////////////////////////////////////////////////////////
     } mesh_data;
 
     // TODO: Need upgrade search valid pairs algorithm
@@ -74,6 +73,31 @@ namespace lod_generator {
         double C;
         double D;
     } face_args;
+
+    // Define edge_pair structure
+    typedef struct edge_pair {
+        uint32_t v1;
+        uint32_t v2;
+    } edge_pair;
+
+    // Define vertex_and_cost structure
+    typedef struct vertex_and_cost {
+        glm::dvec3 vertex;
+        double cost;
+    } vertex_and_cost;
+
+    // Define cluster structure
+    typedef struct cluster {
+        glm::dvec3 centroid;
+        std::vector<uint32_t> vertices;
+    } cluster;
+
+    // Define lod_result structure
+    typedef struct lod_result {
+        std::shared_ptr<std::vector<uint32_t>> optimized_indexes;
+        std::shared_ptr<std::vector<glm::dvec3>> optimized_vertexes;
+    } lod_result;
+
 
 ///////////////////////////////////////////////////////////////////////////
 // 5. Global Functions

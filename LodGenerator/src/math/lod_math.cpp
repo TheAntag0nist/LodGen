@@ -1,6 +1,7 @@
 #include <math/lod_math.h>
 
 namespace lod_generator {
+
 ///////////////////////////////////////////////////////////////////////////
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids) {
         auto& indexes_ptr = data.indexes;
@@ -652,9 +653,61 @@ namespace qem {
 }
 ///////////////////////////////////////////////////////////////////////////
 namespace vertex_cluster {
-    uint32_t update_mesh(mesh_data data){
-        
-        return SUCCESS;
+
+    uint32_t update_mesh(mesh_data data) {
+        // Имплементация фукнции обновления 
+        uint32_t num_vertices = static_cast<uint32_t>(data.vertexes->size() / 3);
+
+        // Цикл по каждому вертексу
+        for (uint32_t i = 0; i < num_vertices; ++i) {
+            // Проверка использованных вертексов
+            if (data.used_vertexes->find(i) == data.used_vertexes->end()) {
+                continue;
+            }
+
+            // Проход по граням соединенным с вертексом
+            for (auto& edge_vertex : *data.edge_vertexes) {
+                if (edge_vertex.second.v1 == i || edge_vertex.second.v2 == i) {
+
+                    // Вычисление новой позиции вертекса
+                    glm::dvec3 new_position = edge_vertex.first.vertex;
+                    double cost = edge_vertex.first.cost;
+                    if (edge_vertex.second.v1 == i) {
+                        glm::mat4x4& q = (*data.face_quadric_errors)[edge_vertex.second.v2];
+                        for (uint32_t j = 0; j < 4; ++j) {
+                            new_position[j] -= glm::row(q, j)[3] / (2.0 * glm::row(q, j)[j]);
+                        }
+                    }
+                    else {
+                        glm::mat4x4& q = (*data.face_quadric_errors)[edge_vertex.second.v1];
+                        for (uint32_t j = 0; j < 4; ++j) {
+                            new_position[j] -= glm::row(q, j)[3] / (2.0 * glm::row(q, j)[j]);
+                        }
+                    }
+
+                    // Обновление позиции вертекса
+                    (*data.vertexes)[i * 3] = new_position[0];
+                    (*data.vertexes)[i * 3 + 1] = new_position[1];
+                    (*data.vertexes)[i * 3 + 2] = new_position[2];
+
+                    // Обновление нормали вертекса
+                    glm::dvec3 normal = glm::dvec3(0.0);
+                    for (auto& edge : *data.valid_edges) {
+                        if (edge.v1 == i || edge.v2 == i) {
+                            glm::dvec3 v1 = glm::dvec3((*data.vertexes)[edge.v1 * 3], (*data.vertexes)[edge.v1 * 3 + 1], (*data.vertexes)[edge.v1 * 3 + 2]);
+                            glm::dvec3 v2 = glm::dvec3((*data.vertexes)[edge.v2 * 3], (*data.vertexes)[edge.v2 * 3 + 1], (*data.vertexes)[edge.v2 * 3 + 2]);
+                            normal += glm::cross(v1, v2);
+                        }
+                    }
+                    normal = glm::normalize(normal);
+                    (*data.normals)[i] = normal;
+                    break;
+                }
+            }
+        }
+
+        // Возвращаем число обновленных вертексов
+        return num_vertices;
     }
 
     int search_vertex_clusters(mesh_data data){
