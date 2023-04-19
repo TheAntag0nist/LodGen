@@ -74,7 +74,7 @@ namespace lod_generator {
         core.execute_program(id);
         core.get_output(id, 0, valid_pairs);
 
-        std::cout << "CPU First pair is " << (*data.valid_edges)[0].first << " and "<< (*data.valid_edges)[0].second << std::endl;
+        std::cout << "CPU First pair is " << (*data.valid_edges)[0].v1 << " and "<< (*data.valid_edges)[0].v2 << std::endl;
         std::cout << "Vertexes Size: " << v_size << std::endl;
         std::cout << "Indexes Size: " << i_size << std::endl;
         std::cout << "GPU Valid Edges Size: " << valid_pairs.size() << std::endl;
@@ -82,13 +82,13 @@ namespace lod_generator {
 
         int edge_id = 0;
         for(size_t i = 0; i < valid_pairs.size(); ++i){
-            if(valid_pairs[i].first != 0 || 
-                valid_pairs[i].second != 0){
+            if(valid_pairs[i].v1 != 0 || 
+                valid_pairs[i].v2 != 0){
                 edge_id = i;
                 break;
             }
         }
-        std::cout << "First GPU Correct Edge: " << valid_pairs[edge_id].first << " and " << valid_pairs[edge_id].second << std::endl;
+        std::cout << "First GPU Correct Edge: " << valid_pairs[edge_id].v1 << " and " << valid_pairs[edge_id].v2 << std::endl;
         core.flush_program_data(id);
         core.flush_queue();
     }

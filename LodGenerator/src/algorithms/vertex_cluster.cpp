@@ -15,8 +15,12 @@ namespace lod_generator{
         data.indexes = std::shared_ptr<std::vector<uint32_t>>(&indexes, [](std::vector<uint32_t>*) {});
         data.normals = std::shared_ptr<std::vector<glm::dvec3>>(&normals, [](std::vector<glm::dvec3>*) {});
         
-        data.used_vertexes = std::shared_ptr<std::set<uint32_t>>();
-        data.clusters = std::shared_ptr<std::list<cluster>>();
+        data.vertexes_weights = std::make_shared<std::vector<v_and_w>>();
+        data.used_vertexes = std::make_shared<std::set<uint32_t>>();
+        data.clusters = std::make_shared<std::list<cluster>>();
+
+        data.max_clusters_cnt = std::ceil(data.indexes->size() / 100);
+        data.max_iterations = 3 * (indexes.size() / 10.0f);
         data.algorithm_error = error;
 
         vertex_cluster::optimize_mesh(data);

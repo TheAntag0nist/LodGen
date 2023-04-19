@@ -19,7 +19,7 @@ namespace lod_generator {
         auto real_vertex_id = vertex_id * 3;
         auto& vertexes_ptr = data.vertexes;
 
-        auto result = glm::vec3(
+        auto result = glm::dvec3(
             (*vertexes_ptr)[real_vertex_id],
             (*vertexes_ptr)[real_vertex_id + 1],
             (*vertexes_ptr)[real_vertex_id + 2]
@@ -117,7 +117,63 @@ namespace lod_generator {
         return SUCCESS;
     }
 
+    glm::dvec3 get_triangle_center(tr_data& data) {
+        glm::dvec3 temp = (data.v1 + data.v2 + data.v3);
+        return glm::dvec3(temp.x / 3.0f, temp.y / 3.0f, temp.z / 3.0f);
+    }
+
+    std::set<uint32_t> get_nearest_vertexes(mesh_data data, uint32_t vertex_id) {
+        auto& indexes = data.indexes;
+        std::set<uint32_t> result;
+
+        for (int i = 0; i < indexes->size(); i += 3) {
+            auto ind_1 = (*indexes)[i];
+            auto ind_2 = (*indexes)[i + 1];
+            auto ind_3 = (*indexes)[i + 2];
+
+            if (ind_1 == vertex_id) {
+                result.insert(ind_2);
+                result.insert(ind_3);
+            }
+            else if (ind_2 == vertex_id) {
+                result.insert(ind_1);
+                result.insert(ind_3);
+            }
+            else if (ind_3 == vertex_id) {
+                result.insert(ind_1);
+                result.insert(ind_2);
+            }
+        }
+
+        return result;
+    }
+
+    double vertex_weight(mesh_data data, uint32_t v_id) {
+        auto nearest_vertexes = get_nearest_vertexes(data, v_id);
+        double accumulated_distance = 0.0f;
+        double angle_distance = 0.0f;
+
+        auto a = get_vertex_data(data, v_id);
+        for (auto id : nearest_vertexes) {
+            auto b = get_vertex_data(data, id);
+            angle_distance += glm::length(a - b) * (glm::dot(a, b) / (glm::length(a) * glm::length(b)));
+            accumulated_distance += glm::length(a - b);
+        }
+
+        return angle_distance / accumulated_distance;
+    }
+
     int get_vertex_weights(mesh_data data) {
+        auto& vertexes_w = data.vertexes_weights;
+        int vertexes_cnt = data.vertexes->size() / 3;
+        auto& vertexes = data.vertexes;
+
+        if(!vertexes_w->empty())
+            vertexes_w->clear();
+        vertexes_w->resize(vertexes_cnt);
+
+        for (uint32_t i = 0; i < vertexes_cnt; ++i)
+            (*vertexes_w)[i] = v_and_w{  i, vertex_weight(data, i)};
 
         return SUCCESS;
     }
@@ -128,7 +184,7 @@ namespace qem {
         int num_threads = std::thread::hardware_concurrency();
 
         // 1. Create result vector for list of valid edges
-        std::vector<std::list<std::pair<uint32_t, uint32_t>>> valid_lists;
+        std::vector<std::list<edge_pair>> valid_lists;
         std::vector<std::list<uint32_t>> valid_faces_ids_lists;
         valid_faces_ids_lists.resize(num_threads);
         valid_lists.resize(num_threads); 
@@ -196,19 +252,19 @@ namespace qem {
             auto len_bc = glm::length(v_bc);
 
             if(len_ab < data.algorithm_error){
-                valid_edges->push_back(std::make_pair(v1_index, v2_index));
+                valid_edges->push_back(edge_pair{ v1_index, v2_index });
                 continue;
             }
             
             // Add valid edge
             if(len_ac < data.algorithm_error){
-                valid_edges->push_back(std::make_pair(v1_index, v3_index));
+                valid_edges->push_back(edge_pair{ v1_index, v3_index });
                 continue;
             }
 
             // Add valid edge
             if(len_bc < data.algorithm_error){
-                valid_edges->push_back(std::make_pair(v2_index, v3_index));
+                valid_edges->push_back(edge_pair{v2_index, v3_index});
                 continue;;
             }
         }
@@ -303,8 +359,8 @@ namespace qem {
             std::list<uint32_t> faces_ids_v2;
 
             // Get Vertexes Surfaces
-            get_vertex_surfaces(edge.first, data, faces_ids_v1);
-            get_vertex_surfaces(edge.second, data, faces_ids_v2);
+            get_vertex_surfaces(edge.v1, data, faces_ids_v1);
+            get_vertex_surfaces(edge.v2, data, faces_ids_v2);
             
             glm::mat4x4 v1_Q(0);
             glm::mat4x4 v2_Q(0);
@@ -319,8 +375,8 @@ namespace qem {
             glm::mat4x4 Q = v1_Q + v2_Q;
 
             // Get Vertexes
-            auto v1 = get_vertex_data(data, edge.first);
-            auto v2 = get_vertex_data(data, edge.second);
+            auto v1 = get_vertex_data(data, edge.v1);
+            auto v2 = get_vertex_data(data, edge.v2);
             auto v3 = (v1 + v2) / 2.0f;
 
             // Create vertexes for calculations
@@ -334,11 +390,11 @@ namespace qem {
             auto cost_v3 = get_cost(v3_res, Q);
 
             if(cost_v1 <= cost_v2 && cost_v1 <= cost_v3)
-                min_vert_list->push_back(std::make_pair(std::make_pair(v1, cost_v1), edge));
+                min_vert_list->push_back(std::make_pair(vertex_and_cost{ v1, cost_v1 }, edge));
             else if (cost_v2 <= cost_v1 && cost_v2 <= cost_v3)
-                min_vert_list->push_back(std::make_pair(std::make_pair(v2, cost_v2), edge));
+                min_vert_list->push_back(std::make_pair(vertex_and_cost{ v2, cost_v2 }, edge));
             else if (cost_v3 <= cost_v1 && cost_v3 <= cost_v2)
-                min_vert_list->push_back(std::make_pair(std::make_pair(v3, cost_v3), edge));
+                min_vert_list->push_back(std::make_pair(vertex_and_cost{ v3, cost_v3 }, edge));
         }
 
         return SUCCESS;
@@ -462,11 +518,11 @@ namespace qem {
                 // 3. Find Min Elem
                 auto min_elem = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
                     [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
-                    { return a.first.second < b.first.second; });
+                    { return a.first.cost < b.first.cost; });
                 
                 auto& edge = (*min_elem).second;
-                uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
-                uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+                uint32_t min_index = edge.v1 < edge.v2 ? edge.v1 : edge.v2;
+                uint32_t max_index = edge.v1 > edge.v2 ? edge.v1 : edge.v2;
 
                 // If not process that node or linked node then optimize mesh
                 if (used_indexes.find(min_index) == used_indexes.end() &&
@@ -478,10 +534,10 @@ namespace qem {
 
                     // 5. Update edges
                     for (auto& item : (*data.edge_vertexes)) {
-                        if (item.second.first > max_index)
-                            --item.second.first;
-                        if (item.second.second > max_index)
-                            --item.second.second;
+                        if (item.second.v1 > max_index)
+                            --item.second.v1;
+                        if (item.second.v2 > max_index)
+                            --item.second.v2;
                     }
 
                     // TODO: Maybe rewrite using <algorithm>
@@ -527,13 +583,14 @@ namespace qem {
 
         // 2. Sort by costs
         data.edge_vertexes->sort(
-            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) { return a.first.second < b.first.second; });
+            [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
+            { return a.first.cost < b.first.cost; });
 
         // 3. While can optimize -> try to optimize
         while (data.edge_vertexes->size() > 0 && iter < data.max_iterations) {
             auto& edge = data.edge_vertexes->front().second;
-            uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
-            uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+            uint32_t min_index = edge.v1 < edge.v2 ? edge.v1 : edge.v2;
+            uint32_t max_index = edge.v1 > edge.v2 ? edge.v1 : edge.v2;
 
             if (used_indexes.find(min_index) == used_indexes.end() &&
                 used_indexes.find(max_index) == used_indexes.end()) {
@@ -542,10 +599,10 @@ namespace qem {
 
                 // 5. Update edges
                 for (auto& item : (*data.edge_vertexes)) {
-                    if(item.second.first > max_index)
-                        --item.second.first;
-                    if(item.second.second > max_index)
-                        --item.second.second;
+                    if(item.second.v1 > max_index)
+                        --item.second.v1;
+                    if(item.second.v2 > max_index)
+                        --item.second.v2;
                 }
 
                 // TODO: Maybe rewrite using <algorithm>
@@ -592,18 +649,18 @@ namespace qem {
         // 1. Get vertex with minimal cost
         auto iter = std::min_element(data.edge_vertexes->begin(), data.edge_vertexes->end(),
                 [](const std::pair<vertex_and_cost, edge_pair>& a, const std::pair<vertex_and_cost, edge_pair>& b) 
-                { return a.first.second < b.first.second; });
+                { return a.first.cost < b.first.cost; });
 
         std::pair<vertex_and_cost, edge_pair> replace_vertex = *iter;
         data.edge_vertexes->erase(iter);
         uint32_t deleted_faces = 0;
 
         // 2. Get Data
-        auto vertex = replace_vertex.first.first;
+        auto vertex = replace_vertex.first.vertex;
         auto edge = replace_vertex.second;
 
-        uint32_t min_index = edge.first < edge.second ? edge.first : edge.second;
-        uint32_t max_index = edge.first > edge.second ? edge.first : edge.second;
+        uint32_t min_index = edge.v1 < edge.v2 ? edge.v1 : edge.v2;
+        uint32_t max_index = edge.v1 > edge.v2 ? edge.v1 : edge.v2;
 
         // 3. Update vertexes
         // 3.1. Update v1 (set new value)
@@ -661,17 +718,78 @@ namespace qem {
 ///////////////////////////////////////////////////////////////////////////
 namespace vertex_cluster {
     uint32_t update_mesh(mesh_data data){
+        //// 1. Get weight for every vertex
+        //get_vertex_weights(data);
+        //
+        //// 2. Sort weights
+        //std::sort(data.vertexes_weights->begin(), data.vertexes_weights->end(),
+        //    [](const v_and_w& x, const v_and_w& y) { return x.weight < y.weight; });
+        
+        // 1. Search vertex clusters
+        search_vertex_clusters(data);
+
+        return SUCCESS;
+    }
+
+    int get_centroids(mesh_data data) {
+        auto& indexes = data.indexes;
+        std::vector<uint32_t> temp_indexes(*indexes);
+        
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(temp_indexes.begin(), temp_indexes.end(), g);
+        std::vector<uint32_t> random_ids(temp_indexes.begin(), temp_indexes.begin() + data.max_clusters_cnt);
+
+        for (uint32_t center_id : random_ids) {
+            glm::dvec3 center = get_vertex_data(data, center_id);
+            std::list<uint32_t> cluster_vertex_ind = { center_id };
+            data.clusters->push_back(cluster{ cluster_vertex_ind, center });
+        }
         
         return SUCCESS;
     }
 
     int search_vertex_clusters(mesh_data data) {
+        auto& vert_weights = data.vertexes_weights;
+        auto clusters_cnt = data.max_clusters_cnt;
+        auto& clusters = data.clusters;
+        auto& indexes = data.indexes;
+        bool k_means_flag = true;
+        
+        // 1. Get k centers
+        get_centroids(data);
+
+        while (k_means_flag) {
+            k_means_flag = false;
+
+            // Update cluster
+            for (cluster& item : (*data.clusters)) {
+                if (item.vertexes_ind.size() < data.max_k_means) {
+                    // Create max distance
+                    auto inf = std::numeric_limits<float>::infinity();
+                    glm::dvec3 distance = glm::dvec3(inf, inf, inf);
+
+                    // Find nearest vertexes
+                    for (size_t i = 0; i < data.vertexes->size(); i += 3) {
+
+                    }
+                }
+            }
+        }
 
         return SUCCESS;
     }
     
     lod_result optimize_mesh(mesh_data data){
-        
+        // 0. Data Section
+        uint32_t iter = 0;
+
+        // 1. Optimize geometry
+        while (iter < data.max_iterations) {
+            update_mesh(data);
+            ++iter;
+        }
+
         return SUCCESS;
     }
 }

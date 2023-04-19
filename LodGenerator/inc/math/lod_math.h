@@ -8,9 +8,10 @@
 namespace lod_generator {
 ///////////////////////////////////////////////////////////////////////////
     // 3. Global Type Definitions
-    typedef std::list<uint32_t> cluster;
-    typedef std::pair<glm::vec3, double> vertex_and_cost;
-    typedef std::pair<uint32_t, uint32_t> edge_pair;
+    typedef struct vertex_and_cost;
+    typedef struct edge_pair;
+    typedef struct v_and_w;
+    typedef struct cluster;
 ///////////////////////////////////////////////////////////////////////////
     // 4. Global Structures
     // 4.1. mesh_data - it's optimization metadata
@@ -36,8 +37,10 @@ namespace lod_generator {
         std::shared_ptr<std::list<std::pair<vertex_and_cost, edge_pair>>> edge_vertexes;
 ///////////////////////////////////////////////////////////////////////////
         // 4.3. Vertexes Clustering Algorithm Data
-        uint32_t clusters_count;
+        uint32_t max_k_means = 10;
+        uint32_t max_clusters_cnt;
 
+        std::shared_ptr<std::vector<v_and_w>> vertexes_weights;
         std::shared_ptr<std::set<uint32_t>> used_vertexes;
         std::shared_ptr<std::list<cluster>> clusters;
 ///////////////////////////////////////////////////////////////////////////
@@ -77,10 +80,38 @@ namespace lod_generator {
         double D;
     } face_args;
 
+    // 4.7. cluster - Representation of vertex cluster
+    typedef struct cluster {
+        std::list<uint32_t> vertexes_ind;
+        glm::dvec3 center;
+    } cluster;
+
+    // 4.8. Edge Pair - Pair of two indexes of edge
+    typedef struct edge_pair {
+        uint32_t v1;
+        uint32_t v2;
+    } edge_pair;
+
+    // 4.9. Vertex and Cost - Pair of vertex and their cost
+    typedef struct vertex_and_cost {
+        glm::vec3 vertex;
+        double cost;
+    } vertex_and_cost;
+
+    // 4.10. Vertex and Weight - Pair of vertex and their weight
+    typedef struct v_and_w {
+        uint32_t vertex_id;
+        double weight;
+    } v_and_w;
+
 ///////////////////////////////////////////////////////////////////////////
 // 5. Global Functions
     int get_vertex_surfaces(uint32_t vertex_id, mesh_data data, std::list<uint32_t>& faces_ids);
+    std::set<uint32_t> get_nearest_vertexes(mesh_data data, uint32_t vertex_id);
+    double vertex_weight(mesh_data data, uint32_t v_id);
     int get_vertex_weights(mesh_data data);
+
+    glm::dvec3 get_triangle_center(tr_data& data);
 
     int get_faces_normals_cpu(uint32_t thread_id, uint32_t split_size, mesh_data data);
     glm::dvec3 get_face_normal(const tr_data& data);
@@ -115,6 +146,7 @@ namespace lod_generator {
     namespace vertex_cluster {
         int search_vertex_clusters(mesh_data data);
         uint32_t update_mesh(mesh_data data);
+        int get_centroids(mesh_data data);
 
         lod_result optimize_mesh(mesh_data data);
     }
