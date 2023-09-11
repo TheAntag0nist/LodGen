@@ -7,6 +7,13 @@ namespace lod_generator{
         uint64_t cnt_faces = indexes.size() / 3;
         lod_result result = SUCCESS;
 
+        // Error in Vertex Cluster Algorithm it's 
+        // percantage of optimization
+        if (error > 1.0f)
+            error = 0.9f;
+        if (error < 0.0f)
+            error = 0.01f;
+
         std::vector<glm::dvec3> normals;
         normals.resize(cnt_faces);
 
@@ -20,7 +27,7 @@ namespace lod_generator{
         data.clusters = std::make_shared<std::list<cluster>>();
 
         data.max_clusters_cnt = std::ceil(data.indexes->size() / 100);
-        data.max_iterations = 3 * (indexes.size() / 10.0f);
+        data.max_iterations = indexes.size() * error;
         data.algorithm_error = error;
 
         vertex_cluster::optimize_mesh(data);

@@ -718,15 +718,19 @@ namespace qem {
 ///////////////////////////////////////////////////////////////////////////
 namespace vertex_cluster {
     uint32_t update_mesh(mesh_data data){
-        //// 1. Get weight for every vertex
-        //get_vertex_weights(data);
-        //
-        //// 2. Sort weights
-        //std::sort(data.vertexes_weights->begin(), data.vertexes_weights->end(),
-        //    [](const v_and_w& x, const v_and_w& y) { return x.weight < y.weight; });
-        
         // 1. Search vertex clusters
         search_vertex_clusters(data);
+
+        // 2. Optimize Geometry By Deleting Clusters 
+        for (auto& cluster_item : *data.clusters) {
+            uint32_t first_index = *cluster_item.vertexes_ind.begin();
+            
+
+        }
+
+        // 3. Clear previous stage
+        data.used_vertexes->clear();
+        data.clusters->clear();
 
         return SUCCESS;
     }
@@ -750,7 +754,6 @@ namespace vertex_cluster {
     }
 
     int search_vertex_clusters(mesh_data data) {
-        auto& vert_weights = data.vertexes_weights;
         auto clusters_cnt = data.max_clusters_cnt;
         auto& clusters = data.clusters;
         auto& indexes = data.indexes;
@@ -759,6 +762,7 @@ namespace vertex_cluster {
         // 1. Get k centers
         get_centroids(data);
 
+        // 2. k-means algorithm
         while (k_means_flag) {
             k_means_flag = false;
 
@@ -766,12 +770,35 @@ namespace vertex_cluster {
             for (cluster& item : (*data.clusters)) {
                 if (item.vertexes_ind.size() < data.max_k_means) {
                     // Create max distance
-                    auto inf = std::numeric_limits<float>::infinity();
-                    glm::dvec3 distance = glm::dvec3(inf, inf, inf);
+                    constexpr auto inf = std::numeric_limits<double>::infinity();
+                    double distance = inf;
+                    int v_id = -1;
 
                     // Find nearest vertexes
-                    for (size_t i = 0; i < data.vertexes->size(); i += 3) {
+                    for (size_t i = 0; i < data.vertexes->size() / 3.0f; ++i) {
+                        auto vertex = (glm::dvec3) get_vertex_data(data, i);
+                        auto temp_dist = glm::length(item.center - vertex);
+                        bool already_used = std::find_if(item.vertexes_ind.begin(), item.vertexes_ind.end(), 
+                            [i](const uint32_t item) { return item == i; }) != item.vertexes_ind.end();
 
+                        // By lowest distance
+                        if (temp_dist < distance && !already_used) {
+                            distance = temp_dist;
+                            v_id = i;
+                        }
+                    }
+
+                    // Add vertex to cluster
+                    if (v_id != -1 && item.vertexes_ind.size() < data.max_k_means) {
+                        glm::dvec3 new_center = glm::dvec3(0, 0, 0);
+                        item.vertexes_ind.push_back(v_id);
+                        for (auto& id : item.vertexes_ind)
+                            new_center += get_vertex_data(data, id);
+
+                        item.center.x = new_center.x / item.vertexes_ind.size();
+                        item.center.y = new_center.y / item.vertexes_ind.size();
+                        item.center.z = new_center.z / item.vertexes_ind.size();
+                        k_means_flag = true;
                     }
                 }
             }
